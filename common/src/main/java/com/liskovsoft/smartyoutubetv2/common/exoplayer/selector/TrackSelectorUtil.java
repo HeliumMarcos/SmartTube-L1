@@ -54,8 +54,7 @@ public class TrackSelectorUtil {
             trackName = joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(buildResolutionShortString(format),
                     buildFPSString(format)), buildBitrateString(format)), extractCodec(format)), buildHDRString(format)), buildHighBitrateMark(format));
         } else if (MimeTypes.isAudio(format.sampleMimeType)) {
-            trackName = joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(buildLanguageString(format),
-                    buildAudioPropertyString(format)), buildBitrateString(format)), extractCodec(format)), buildChannels(format)), buildDrcMark(format));
+            trackName = buildReadableAudioTrackName(format);
         } else if (MimeTypes.isText(format.sampleMimeType)) {
             trackName = buildLanguageString(format);
         } else {
@@ -423,4 +422,56 @@ public class TrackSelectorUtil {
 
         return new Pair<>(prefix, String.valueOf(originHeight));
     }
-}
+}    /**
+     * TV-friendly audio labels: codec name first, then channel layout and bitrate.
+     * Only show a channel layout when it is explicitly reported by the stream.
+     */
+    public static String buildReadableAudioTrackName(Format format) {
+        String label = buildAudioCodecLabel(format);
+        label = joinWithSeparator(label, buildChannels(format));
+        if (format.bitrate > 0) {
+            label = joinWithSeparator(label, Math.round(format.bitrate / 1000f) + " kbps");
+        }
+        label = joinWithSeparator(label, buildLanguageString(format));
+        label = joinWithSeparator(label, buildDrcMark(format));
+        return label;
+    }
+
+    public static String buildAudioCodecLabel(Format format) {
+        if (format == null) {
+            return "Áudio";
+        }
+        String mime = format.sampleMimeType == null ? "" : format.sampleMimeType.toLowerCase(java.util.Locale.US);
+        String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
+        if (mime.equals("audio/eac3-joc") || codec.contains("ec+3")) {
+            return "Dolby Digital Plus (Atmos)";
+        }
+        if (mime.equals("audio/eac3") || codec.contains("ec-3")) {
+            return "Dolby Digital Plus";
+        }
+        if (mime.equals("audio/ac3") || codec.contains("ac-3")) {
+            return "Dolby Digital";
+        }
+        if (mime.equals("audio/mp4a-latm") || codec.startsWith("mp4a")) {
+            return "AAC";
+        }
+        if (mime.equals("audio/opus") || codec.contains("opus")) {
+            return "Opus";
+        }
+        if (mime.equals("audio/vorbis") || codec.contains("vorbis")) {
+            return "Vorbis";
+        }
+        if (mime.equals("audio/vnd.dts.hd") || mime.equals("audio/vnd.dts.hd;profile=lbr")) {
+            return "DTS-HD";
+        }
+        if (mime.equals("audio/vnd.dts")) {
+            return "DTS";
+        }
+        if (mime.equals("audio/true-hd")) {
+            return "Dolby TrueHD";
+        }
+        String shortCodec = extractCodec(format);
+        return shortCodec == null || shortCodec.isEmpty() ? "Áudio" : shortCodec.toUpperCase(java.util.Locale.US);
+    }
+
+
