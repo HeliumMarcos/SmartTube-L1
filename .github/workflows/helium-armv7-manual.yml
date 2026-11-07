@@ -1,0 +1,47 @@
+name: Helium ARMv7 APK (manual)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: helium-armv7-manual
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code and submodules
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Verify ARMv7-only configuration
+        shell: bash
+        run: |
+          grep -q "include 'armeabi-v7a' // Helium: build ARMv7 only" smarttubetv/build.gradle
+          grep -q "universalApk false" smarttubetv/build.gradle
+
+      - name: Build ARMv7 debug APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :smarttubetv:assembleStbetaDebug --no-daemon
+
+      - name: Upload ARMv7 APK only
+        uses: actions/upload-artifact@v4
+        with:
+          name: SmartTube-L1-ARMv7
+          path: smarttubetv/build/outputs/apk/**/*armeabi-v7a.apk
+          if-no-files-found: error
+          retention-days: 7
