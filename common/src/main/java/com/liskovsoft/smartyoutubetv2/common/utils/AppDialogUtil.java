@@ -286,7 +286,7 @@ public class AppDialogUtil {
         FormatItem selected = playerData.getFormat(FormatItem.TYPE_AUDIO);
         List<OptionItem> options = new ArrayList<>();
 
-        FormatItem automatic = playerData.getDefaultAudioFormat();
+        FormatItem automatic = ExoFormatItem.fromAudioSpecs("auto,null");
         options.add(UiOptionItem.from(context.getString(R.string.audio_preset_auto),
                 option -> playerData.setFormat(automatic),
                 selected == null || selected.equals(automatic)));
