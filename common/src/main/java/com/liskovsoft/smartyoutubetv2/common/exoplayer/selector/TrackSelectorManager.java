@@ -470,7 +470,12 @@ public class TrackSelectorManager implements TrackSelectorCallback {
 
         MediaTrack result = createAutoSelection(originTrack.rendererIndex);
 
-        if (originTrack.format != null) { // not auto selection
+        boolean heliumAutomaticAudio = originTrack.rendererIndex == RENDERER_INDEX_AUDIO
+                && originTrack.format != null
+                && originTrack.format.id == null
+                && "auto".equalsIgnoreCase(originTrack.format.codecs);
+
+        if (originTrack.format != null && !heliumAutomaticAudio) { // explicit track or codec
             MediaTrack prevResult;
             MediaTrack tmpResult = null;
 
@@ -557,10 +562,7 @@ public class TrackSelectorManager implements TrackSelectorCallback {
 
         // Helium automatic mode: rank only real tracks in the mapped renderer.
         // A user-selected track ID or explicit codec preference never enters this path.
-        if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO
-                && originTrack.format != null
-                && originTrack.format.id == null
-                && "auto".equalsIgnoreCase(originTrack.format.codecs)) {
+        if (heliumAutomaticAudio) {
             MediaTrack best = null;
             int bestScore = Integer.MIN_VALUE;
             AudioOutputCapabilities capabilities = AudioOutputCapabilities.query(mContext);
@@ -595,7 +597,7 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         // manually selected track ID.
         if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO
                 && originTrack.format != null && originTrack.format.id == null
-                && result != null) {
+                && !heliumAutomaticAudio && result != null) {
             MediaTrack[][] audioGroups = filterByLanguage(renderer.mediaTracks, originTrack);
             for (MediaTrack[] audioGroup : audioGroups) {
                 if (audioGroup == null) {
