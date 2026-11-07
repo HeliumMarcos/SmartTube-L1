@@ -420,7 +420,6 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
         mEventListener.onEngineError(error.type, error.rendererIndex, nested);
     }
 
-    @Override
     private boolean tryRecoverAudio(ExoPlaybackException error) {
         if (error.type != ExoPlaybackException.TYPE_RENDERER
                 || error.rendererIndex != TrackSelectorManager.RENDERER_INDEX_AUDIO
