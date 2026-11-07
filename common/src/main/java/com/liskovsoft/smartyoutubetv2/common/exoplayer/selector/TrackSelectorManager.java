@@ -555,6 +555,40 @@ public class TrackSelectorManager implements TrackSelectorCallback {
             }
         }
 
+        // Helium automatic mode: rank only real tracks in the mapped renderer.
+        // A user-selected track ID or explicit codec preference never enters this path.
+        if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO
+                && originTrack.format != null
+                && originTrack.format.id == null
+                && "auto".equalsIgnoreCase(originTrack.format.codecs)) {
+            MediaTrack best = null;
+            int bestScore = Integer.MIN_VALUE;
+            AudioOutputCapabilities capabilities = AudioOutputCapabilities.query(mContext);
+            MediaTrack[][] groups = filterByLanguage(renderer.mediaTracks, originTrack);
+            for (MediaTrack[] group : groups) {
+                if (group == null) {
+                    continue;
+                }
+                for (MediaTrack candidate : group) {
+                    if (candidate == null || candidate.format == null
+                            || hasPlaybackGlitch(candidate)
+                            || !capabilities.canPlay(candidate.format)) {
+                        continue;
+                    }
+                    int score = automaticAudioScore(candidate.format, capabilities);
+                    if (score > bestScore) {
+                        best = candidate;
+                        bestScore = score;
+                    }
+                }
+            }
+            if (best != null) {
+                Log.d(TAG, "Automatic surround audio: selected score=" + bestScore
+                        + ", encoded HDMI output=" + capabilities.hasEncodedOutput(best.format));
+                result = best;
+            }
+        }
+
         // For a codec preference (rather than an explicitly selected track), prefer
         // the available multichannel variant of the SAME codec. Never synthesize
         // channels, bypass the existing supported-track filtering, or override a
@@ -598,6 +632,31 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         }
 
         return result;
+    }
+
+    /**
+     * Prefer supported multichannel Dolby, then multichannel Opus/AAC, then
+     * compatible stereo. This ranks available streams; it never transcodes.
+     * Decoder availability allows PCM output, not guaranteed HDMI bitstream.
+     */
+    private static int automaticAudioScore(Format format, AudioOutputCapabilities capabilities) {
+        String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
+        String mime = format.sampleMimeType == null ? "" : format.sampleMimeType;
+        boolean eac3 = codec.startsWith("ec-3") || "audio/eac3".equals(mime);
+        boolean ac3 = codec.startsWith("ac-3") || "audio/ac3".equals(mime);
+        boolean opus = codec.startsWith("opus") || "audio/opus".equals(mime);
+        boolean aac = codec.startsWith("mp4a") || "audio/mp4a-latm".equals(mime);
+        boolean surround = format.channelCount >= 6;
+        int tier;
+        if (surround) {
+            tier = eac3 ? 80 : ac3 ? 70 : opus ? 60 : aac ? 50 : 40;
+        } else {
+            tier = opus ? 30 : aac ? 25 : eac3 ? 20 : ac3 ? 15 : 10;
+        }
+        // Bitstream-capable outputs break ties but do not override channel tiers.
+        int passthroughBonus = capabilities.hasEncodedOutput(format) ? 5 : 0;
+        int bitrateBonus = format.bitrate > 0 ? Math.min(format.bitrate / 100000, 9) : 0;
+        return tier * 100 + passthroughBonus + bitrateBonus;
     }
 
     private void applyOverride(int rendererIndex) {
