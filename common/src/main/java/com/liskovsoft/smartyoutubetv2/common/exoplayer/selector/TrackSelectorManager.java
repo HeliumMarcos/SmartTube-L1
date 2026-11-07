@@ -560,6 +560,32 @@ public class TrackSelectorManager implements TrackSelectorCallback {
             }
         }
 
+        // Quality-first automatic video mode. Manual presets and explicit
+        // tracks retain the original selection behavior. A missing format is
+        // the VIDEO_AUTO sentinel, not an instruction to force a codec.
+        if (originTrack.rendererIndex == RENDERER_INDEX_VIDEO && originTrack.format == null) {
+            MediaTrack bestVideo = null;
+            for (MediaTrack[] group : renderer.mediaTracks) {
+                if (group == null) {
+                    continue;
+                }
+                for (MediaTrack candidate : group) {
+                    if (candidate == null || candidate.format == null
+                            || hasPlaybackGlitch(candidate)
+                            || !Utils.isFormatSupported(candidate)) {
+                        continue;
+                    }
+                    if (bestVideo == null || compareAutomaticVideo(candidate.format, bestVideo.format) > 0) {
+                        bestVideo = candidate;
+                    }
+                }
+            }
+            if (bestVideo != null) {
+                result = bestVideo;
+                Log.d(TAG, "Quality-first video auto: " + result.format);
+            }
+        }
+
         // Helium automatic mode: rank only real tracks in the mapped renderer.
         // A user-selected track ID or explicit codec preference never enters this path.
         if (heliumAutomaticAudio) {
@@ -641,6 +667,48 @@ public class TrackSelectorManager implements TrackSelectorCallback {
      * compatible stereo. This ranks available streams; it never transcodes.
      * Decoder availability allows PCM output, not guaranteed HDMI bitstream.
      */
+    /**
+     * Quality-first ordering for actual supported video tracks:
+     * resolution > HDR > frame rate > codec efficiency > bitrate.
+     * Bitrate is compared last because different codecs are not directly
+     * comparable at equal Mbps. ExoPlayer still handles buffering and errors.
+     */
+    private static int compareAutomaticVideo(Format left, Format right) {
+        int a = TrackSelectorUtil.getRealHeight(left);
+        int b = TrackSelectorUtil.getRealHeight(right);
+        int cmp = Integer.compare(a, b);
+        if (cmp != 0) return cmp;
+
+        cmp = Boolean.compare(isAutomaticHdr(left), isAutomaticHdr(right));
+        if (cmp != 0) return cmp;
+
+        cmp = Float.compare(left.frameRate > 0 ? left.frameRate : 0,
+                right.frameRate > 0 ? right.frameRate : 0);
+        if (cmp != 0) return cmp;
+
+        cmp = Integer.compare(automaticVideoCodecRank(left), automaticVideoCodecRank(right));
+        if (cmp != 0) return cmp;
+
+        return Integer.compare(left.bitrate > 0 ? left.bitrate : 0,
+                right.bitrate > 0 ? right.bitrate : 0);
+    }
+
+    private static boolean isAutomaticHdr(Format format) {
+        return format.colorInfo != null
+                && (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084
+                || format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG);
+    }
+
+    private static int automaticVideoCodecRank(Format format) {
+        String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
+        String mime = format.sampleMimeType == null ? "" : format.sampleMimeType;
+        if (codec.startsWith("av01") || "video/av01".equals(mime)) return 4;
+        if (codec.startsWith("vp09") || codec.startsWith("vp9") || "video/x-vnd.on2.vp9".equals(mime)) return 3;
+        if (codec.startsWith("hev1") || codec.startsWith("hvc1") || "video/hevc".equals(mime)) return 2;
+        if (codec.startsWith("avc1") || "video/avc".equals(mime)) return 1;
+        return 0;
+    }
+
     private static int automaticAudioScore(Format format, AudioOutputCapabilities capabilities) {
         String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
         String mime = format.sampleMimeType == null ? "" : format.sampleMimeType;
