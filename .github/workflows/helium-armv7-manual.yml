@@ -31,7 +31,8 @@ jobs:
       - name: Verify ARMv7-only configuration
         shell: bash
         run: |
-          grep -q "include 'armeabi-v7a' // Helium: build ARMv7 only" smarttubetv/build.gradle
+          grep -Fq "include 'armeabi-v7a'" smarttubetv/build.gradle
+          grep -Fq "abiFilters 'armeabi-v7a'" smarttubetv/build.gradle
           grep -q "universalApk false" smarttubetv/build.gradle
 
       - name: Build ARMv7 debug APK
