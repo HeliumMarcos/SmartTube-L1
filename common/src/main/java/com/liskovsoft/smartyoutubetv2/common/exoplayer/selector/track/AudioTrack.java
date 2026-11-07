@@ -43,6 +43,13 @@ public class AudioTrack extends MediaTrack {
         String language2 = track2.format.language;
         boolean sameLanguage = sameLanguage(language1, language2);
 
+        // A codec-only preference has no track ID, bitrate or channel limit.
+        // Its synthetic format has channelCount=0: do not exclude real 5.1.
+        // Explicitly selected tracks retain their existing bounds.
+        if (id1 == null && bitrate1 == -1 && codecEquals(this, track2)) {
+            return 1;
+        }
+
         if (Helpers.equals(id1, id2)) {
             result = 0;
         } else if (bitrate1 != -1 && bitrateLessOrEquals(bitrate2, bitrate1)) {
