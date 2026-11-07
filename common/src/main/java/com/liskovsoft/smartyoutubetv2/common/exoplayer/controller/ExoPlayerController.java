@@ -41,6 +41,8 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ExoPlayerController implements Player.EventListener, LiveStateProvider {
     private static final String TAG = ExoPlayerController.class.getSimpleName();
@@ -64,6 +66,9 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
     private VolumeBooster mVolumeBooster;
     private boolean mIsEnded;
     private Runnable mOnVideoLoaded;
+    private MediaSource mCurrentMediaSource;
+    private final Set<String> mFailedAudioTracks = new HashSet<>();
+    private int mAudioRecoveryAttempts;
 
     public ExoPlayerController(Context context, PlayerEventListener eventListener) {
         PlayerTweaksData playerTweaksData = PlayerTweaksData.instance(context);
@@ -167,6 +172,9 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
     }
 
     private void openMediaSource(MediaSource mediaSource) {
+        mCurrentMediaSource = mediaSource;
+        mFailedAudioTracks.clear();
+        mAudioRecoveryAttempts = 0;
         mSabrLiveManifest = null; // set by the sabr live only
         mSabrLiveSeekBlocked = false;
         mSabrLiveStartPending = false;
@@ -268,6 +276,8 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
     }
     
     public void release() {
+        mCurrentMediaSource = null;
+        mFailedAudioTracks.clear();
         mTrackSelectorManager.release();
         mMediaSourceFactory.release();
         releasePlayer();
@@ -401,9 +411,61 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
 
         // NOTE: Player is released at this point. So, there is no sense to restore the playback here.
 
+        if (tryRecoverAudio(error)) {
+            return;
+        }
+
         Throwable nested = error.getCause() != null ? error.getCause() : error;
 
         mEventListener.onEngineError(error.type, error.rendererIndex, nested);
+    }
+
+    @Override
+    private boolean tryRecoverAudio(ExoPlaybackException error) {
+        if (error.type != ExoPlaybackException.TYPE_RENDERER
+                || error.rendererIndex != TrackSelectorManager.RENDERER_INDEX_AUDIO
+                || mPlayer == null || mCurrentMediaSource == null || mAudioRecoveryAttempts >= 3) {
+            return false;
+        }
+        MediaTrack selected = mTrackSelectorManager.getSelectedTrack(TrackSelectorManager.RENDERER_INDEX_AUDIO);
+        if (selected == null || selected.format == null) {
+            return false;
+        }
+        mFailedAudioTracks.add(selected.groupIndex + ":" + selected.trackIndex);
+        MediaTrack next = null;
+        int best = Integer.MIN_VALUE;
+        for (MediaTrack candidate : mTrackSelectorManager.getAudioTracks()) {
+            if (candidate == null || candidate.format == null || candidate.groupIndex < 0
+                    || candidate.trackIndex < 0
+                    || mFailedAudioTracks.contains(candidate.groupIndex + ":" + candidate.trackIndex)) {
+                continue;
+            }
+            String mime = candidate.format.sampleMimeType;
+            String codec = candidate.format.codecs == null ? "" : candidate.format.codecs;
+            int tier = "audio/eac3".equals(mime) || codec.startsWith("ec-3") ? 4
+                    : "audio/ac3".equals(mime) || codec.startsWith("ac-3") ? 3
+                    : "audio/opus".equals(mime) || codec.startsWith("opus") ? 2 : 1;
+            int score = tier * 100 + (candidate.format.channelCount >= 6 ? 10 : 0);
+            if (score > best) {
+                best = score;
+                next = candidate;
+            }
+        }
+        if (next == null) {
+            return false;
+        }
+        mAudioRecoveryAttempts++;
+        Log.e(TAG, "Audio recovery attempt " + mAudioRecoveryAttempts
+                + ": alternate track " + next.groupIndex + ":" + next.trackIndex);
+        long position = mPlayer.getCurrentPosition();
+        boolean play = mPlayer.getPlayWhenReady();
+        mTrackSelectorManager.selectTrack(next);
+        mPlayer.prepare(mCurrentMediaSource, false, false);
+        if (position >= 0 && position != C.TIME_UNSET && !mSabrLiveSeekBlocked) {
+            mPlayer.seekTo(position);
+        }
+        mPlayer.setPlayWhenReady(play);
+        return true;
     }
 
     @Override
