@@ -287,17 +287,17 @@ public class AppDialogUtil {
         List<OptionItem> options = new ArrayList<>();
 
         FormatItem automatic = playerData.getDefaultAudioFormat();
-        options.add(UiOptionItem.from("Automatic (device default)",
+        options.add(UiOptionItem.from(context.getString(R.string.audio_preset_auto),
                 option -> playerData.setFormat(automatic),
                 selected == null || selected.equals(automatic)));
 
-        addAudioPreset(options, playerData, selected, "Dolby Digital Plus (E-AC-3)", "ec-3");
-        addAudioPreset(options, playerData, selected, "Dolby Digital (AC-3)", "ac-3");
-        addAudioPreset(options, playerData, selected, "AAC", "mp4a");
-        addAudioPreset(options, playerData, selected, "Opus", "opus");
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_eac3), "ec-3");
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_ac3), "ac-3");
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_aac), "mp4a");
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_opus), "opus");
 
         return OptionCategory.from(AUDIO_PRESETS_ID, OptionCategory.TYPE_RADIO_LIST,
-                "Audio presets", options);
+                context.getString(R.string.audio_presets), options);
     }
 
     private static void addAudioPreset(List<OptionItem> options, PlayerData playerData,
