@@ -18,6 +18,7 @@ jobs:
       - name: Checkout code and submodules
         uses: actions/checkout@v5
         with:
+          ref: helium-enhanced
           submodules: recursive
 
       - name: Set up JDK 17
