@@ -39,7 +39,7 @@ jobs:
           ./gradlew :smarttubetv:assembleStbetaDebug --no-daemon
 
       - name: Upload ARMv7 APK only
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: SmartTube-L1-ARMv7
           path: smarttubetv/build/outputs/apk/**/*armeabi-v7a.apk
