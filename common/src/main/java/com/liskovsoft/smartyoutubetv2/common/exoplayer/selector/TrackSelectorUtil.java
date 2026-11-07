@@ -221,7 +221,9 @@ public class TrackSelectorUtil {
             return false;
         }
 
-        return format.bitrate > 300000;
+        // Bitrate alone does not indicate channel count: high-bitrate stereo
+        // must not be advertised or preferred as 5.1.
+        return format.channelCount >= 6;
     }
 
     public static boolean is48KAudio(Format format) {
