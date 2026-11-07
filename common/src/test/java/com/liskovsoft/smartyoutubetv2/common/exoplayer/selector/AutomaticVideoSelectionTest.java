@@ -70,8 +70,11 @@ public class AutomaticVideoSelectionTest {
                 "sameHdrTransfer", Format.class, Format.class);
         method.setAccessible(true);
         Format sdr = video("vp09", 3840, 2160, 30, 10000000);
-        Format hdr = sdr.copyWithColorInfo(new ColorInfo(
-                C.COLOR_SPACE_BT2020, C.COLOR_RANGE_LIMITED, C.COLOR_TRANSFER_ST2084, null));
+        Format hdr = Format.createVideoSampleFormat(null, "video/x-vnd.on2.vp9", "vp09",
+                10000000, Format.NO_VALUE, 3840, 2160, 30f, null,
+                Format.NO_VALUE, Format.NO_VALUE, null, Format.NO_VALUE,
+                new ColorInfo(C.COLOR_SPACE_BT2020, C.COLOR_RANGE_LIMITED,
+                        C.COLOR_TRANSFER_ST2084, null), null);
         assertFalse((boolean) method.invoke(null, sdr, hdr));
         assertTrue((boolean) method.invoke(null, hdr, hdr));
     }
