@@ -364,6 +364,11 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         return definition;
     }
 
+    public boolean isAutomaticVideoSelection() {
+        MediaTrack selected = mSelectedTracks[RENDERER_INDEX_VIDEO];
+        return selected != null && selected.format == null;
+    }
+
     @Override
     public Pair<Definition, MediaTrack> onSelectVideoTrack(TrackGroupArray groups, Parameters params) {
         return createRendererSelection(RENDERER_INDEX_VIDEO, groups, params);
@@ -412,6 +417,17 @@ public class TrackSelectorManager implements TrackSelectorCallback {
 
         // enable renderer
         mRenderers[rendererIndex].isDisabled = false;
+
+        // Automatic video must not create a fixed single-track override.
+        // Allow ExoPlayer to switch quality as bandwidth/buffer conditions change.
+        if (rendererIndex == RENDERER_INDEX_VIDEO && track.format == null) {
+            enableAutoSelection(rendererIndex);
+            mTrackSelector.setParameters(mTrackSelector.buildUponParameters()
+                    .setRendererDisabled(rendererIndex, false)
+                    .clearSelectionOverrides(rendererIndex));
+            Log.d(TAG, "Automatic video: adaptive selection enabled, fixed override cleared");
+            return;
+        }
 
         MediaTrack matchedTrack = findBestMatch(track);
         
