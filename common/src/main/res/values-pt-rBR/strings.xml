@@ -762,4 +762,10 @@
         <item quantity="one">%s segundo</item>
         <item quantity="other">%s segundos</item>
     </plurals>
+    <string name="audio_presets">Predefinições de áudio</string>
+    <string name="audio_preset_auto">Automático (padrão do dispositivo)</string>
+    <string name="audio_preset_eac3">Dolby Digital Plus (E-AC-3)</string>
+    <string name="audio_preset_ac3">Dolby Digital (AC-3)</string>
+    <string name="audio_preset_aac">AAC</string>
+    <string name="audio_preset_opus">Opus</string>
 </resources>
