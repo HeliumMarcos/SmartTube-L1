@@ -561,7 +561,7 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         // manually selected track ID.
         if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO
                 && originTrack.format != null && originTrack.format.id == null
-                && result != null && result.format != null) {
+                && result != null) {
             MediaTrack[][] audioGroups = filterByLanguage(renderer.mediaTracks, originTrack);
             for (MediaTrack[] audioGroup : audioGroups) {
                 if (audioGroup == null) {
@@ -573,10 +573,13 @@ public class TrackSelectorManager implements TrackSelectorCallback {
                             || originTrack.inBounds(candidate) < 0) {
                         continue;
                     }
-                    int currentChannels = result.format.channelCount;
+                    int currentChannels = result.format != null ? result.format.channelCount : 0;
                     int candidateChannels = candidate.format.channelCount;
-                    if (candidateChannels > currentChannels
-                            && candidateChannels >= 6) {
+                    if (candidateChannels >= 6
+                            && (candidateChannels > currentChannels
+                            || (candidateChannels == currentChannels
+                            && result.format != null
+                            && candidate.format.bitrate > result.format.bitrate))) {
                         result = candidate;
                     }
                 }
