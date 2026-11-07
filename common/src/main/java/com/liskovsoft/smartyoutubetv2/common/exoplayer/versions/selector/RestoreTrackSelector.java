@@ -136,8 +136,16 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
             if (adaptive != null) {
                 return adaptive;
             }
+            // Do not fall back to ExoPlayer's unrestricted adaptive ladder:
+            // it can mix FPS/HDR variants that our safety filter rejected.
+            // A supported fixed format is safer than unexpected mode switches.
+            Definition safeFixed = selectQualityFixedVideo(groups, formatSupports, params);
+            if (safeFixed != null) {
+                Log.d(TAG, "selectVideoTrack: safe fixed quality fallback (no same-FPS/HDR ladder)");
+                return safeFixed;
+            }
             return super.selectVideoTrack(groups, formatSupports,
-                    mixedMimeTypeAdaptationSupports, params, enableAdaptiveTrackSelection);
+                    mixedMimeTypeAdaptationSupports, params, false);
         }
 
         if (mCallback != null) {
@@ -227,6 +235,38 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
      * must not be mixed during bandwidth-driven quality changes.
      * Unknown frame rates are only grouped with other unknown rates.
      */
+    /**
+     * Fallback when no safe adaptive ladder exists. Select only a format the
+     * renderer reports as handled; never switch between incompatible HDR/FPS
+     * variants to manufacture an adaptive ladder.
+     */
+    @Nullable
+    private Definition selectQualityFixedVideo(TrackGroupArray groups, int[][] support,
+            Parameters params) {
+        com.google.android.exoplayer2.Format bestFormat = null;
+        Definition bestDefinition = null;
+        for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+            com.google.android.exoplayer2.source.TrackGroup group = groups.get(groupIndex);
+            for (int j = 0; j < group.length; j++) {
+                com.google.android.exoplayer2.Format format = group.getFormat(j);
+                if ((support[groupIndex][j] & RendererCapabilities.FORMAT_SUPPORT_MASK)
+                        != RendererCapabilities.FORMAT_HANDLED
+                        || format.width > params.maxVideoWidth
+                        || format.height > params.maxVideoHeight
+                        || (format.frameRate > 0 && format.frameRate > params.maxVideoFrameRate)
+                        || (format.bitrate > 0 && format.bitrate > params.maxVideoBitrate)) {
+                    continue;
+                }
+                if (bestFormat == null
+                        || TrackSelectorManager.compareAutomaticVideo(format, bestFormat) > 0) {
+                    bestFormat = format;
+                    bestDefinition = new Definition(group, j);
+                }
+            }
+        }
+        return bestDefinition;
+    }
+
     private static boolean sameContentFrameRate(com.google.android.exoplayer2.Format a,
             com.google.android.exoplayer2.Format b) {
         if (a.frameRate <= 0 || b.frameRate <= 0) {
