@@ -197,6 +197,7 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
                             || (support[groupIndex][j] & RendererCapabilities.ADAPTIVE_SEAMLESS) == 0
                             || !android.text.TextUtils.equals(top.sampleMimeType, other.sampleMimeType)
                             || !sameHdrTransfer(top, other)
+                            || !sameContentFrameRate(top, other)
                             || other.width > params.maxVideoWidth || other.height > params.maxVideoHeight
                             || (other.frameRate > 0 && other.frameRate > params.maxVideoFrameRate)
                             || (other.bitrate > 0 && other.bitrate > params.maxVideoBitrate)) {
@@ -215,9 +216,23 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
         }
         if (best != null) {
             Log.d(TAG, "Quality adaptive ladder: " + best.tracks.length
-                    + " renderer-supported variants, best=" + bestTop);
+                    + " renderer-supported same-FPS variants, best=" + bestTop);
         }
         return best;
+    }
+
+    /**
+     * Keep adaptive variants in the same source frame-rate family.
+     * 23.976/24, 29.97/30 and 59.94/60 are equivalent, but 24/30/60
+     * must not be mixed during bandwidth-driven quality changes.
+     * Unknown frame rates are only grouped with other unknown rates.
+     */
+    private static boolean sameContentFrameRate(com.google.android.exoplayer2.Format a,
+            com.google.android.exoplayer2.Format b) {
+        if (a.frameRate <= 0 || b.frameRate <= 0) {
+            return a.frameRate <= 0 && b.frameRate <= 0;
+        }
+        return Math.abs(a.frameRate - b.frameRate) <= 0.6f;
     }
 
     private static boolean sameHdrTransfer(com.google.android.exoplayer2.Format a,
