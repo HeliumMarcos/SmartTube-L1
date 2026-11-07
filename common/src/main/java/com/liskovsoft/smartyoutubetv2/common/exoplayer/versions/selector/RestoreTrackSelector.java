@@ -131,6 +131,11 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
                 && ((com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager) mCallback)
                         .isAutomaticVideoSelection()) {
             Log.d(TAG, "selectVideoTrack: ExoPlayer adaptive automatic quality");
+            Definition adaptive = selectQualityAdaptiveVideo(groups, formatSupports,
+                    params, enableAdaptiveTrackSelection);
+            if (adaptive != null) {
+                return adaptive;
+            }
             return super.selectVideoTrack(groups, formatSupports,
                     mixedMimeTypeAdaptationSupports, params, enableAdaptiveTrackSelection);
         }
@@ -156,6 +161,70 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
         }
 
         return definition;
+    }
+
+    /**
+     * Prefer the best quality ladder among renderer-confirmed video formats.
+     * FORMAT_HANDLED is supplied by the actual renderer's codec/profile/level
+     * support check, rather than assuming all AV1/HDR profiles are playable.
+     * Keep only seamlessly adaptive formats of the same MIME type and HDR
+     * transfer characteristic to avoid disruptive decoder/color-mode changes.
+     */
+    @Nullable
+    private Definition selectQualityAdaptiveVideo(TrackGroupArray groups, int[][] support,
+            Parameters params, boolean adaptiveEnabled) {
+        if (!adaptiveEnabled || params.forceHighestSupportedBitrate || params.forceLowestBitrate) {
+            return null;
+        }
+        Definition best = null;
+        com.google.android.exoplayer2.Format bestTop = null;
+        for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+            com.google.android.exoplayer2.source.TrackGroup group = groups.get(groupIndex);
+            for (int topIndex = 0; topIndex < group.length; topIndex++) {
+                com.google.android.exoplayer2.Format top = group.getFormat(topIndex);
+                if ((support[groupIndex][topIndex] & RendererCapabilities.FORMAT_SUPPORT_MASK)
+                        != RendererCapabilities.FORMAT_HANDLED
+                        || top.width > params.maxVideoWidth || top.height > params.maxVideoHeight
+                        || (top.frameRate > 0 && top.frameRate > params.maxVideoFrameRate)
+                        || (top.bitrate > 0 && top.bitrate > params.maxVideoBitrate)) {
+                    continue;
+                }
+                java.util.ArrayList<Integer> indices = new java.util.ArrayList<>();
+                for (int j = 0; j < group.length; j++) {
+                    com.google.android.exoplayer2.Format other = group.getFormat(j);
+                    if ((support[groupIndex][j] & RendererCapabilities.FORMAT_SUPPORT_MASK)
+                            != RendererCapabilities.FORMAT_HANDLED
+                            || (support[groupIndex][j] & RendererCapabilities.ADAPTIVE_SEAMLESS) == 0
+                            || !android.text.TextUtils.equals(top.sampleMimeType, other.sampleMimeType)
+                            || !sameHdrTransfer(top, other)
+                            || other.width > params.maxVideoWidth || other.height > params.maxVideoHeight
+                            || (other.frameRate > 0 && other.frameRate > params.maxVideoFrameRate)
+                            || (other.bitrate > 0 && other.bitrate > params.maxVideoBitrate)) {
+                        continue;
+                    }
+                    indices.add(j);
+                }
+                if (indices.size() < 2) continue;
+                if (bestTop == null || TrackSelectorManager.compareAutomaticVideo(top, bestTop) > 0) {
+                    int[] tracks = new int[indices.size()];
+                    for (int j = 0; j < tracks.length; j++) tracks[j] = indices.get(j);
+                    best = new Definition(group, tracks);
+                    bestTop = top;
+                }
+            }
+        }
+        if (best != null) {
+            Log.d(TAG, "Quality adaptive ladder: " + best.tracks.length
+                    + " renderer-supported variants, best=" + bestTop);
+        }
+        return best;
+    }
+
+    private static boolean sameHdrTransfer(com.google.android.exoplayer2.Format a,
+            com.google.android.exoplayer2.Format b) {
+        int at = a.colorInfo == null ? -1 : a.colorInfo.colorTransfer;
+        int bt = b.colorInfo == null ? -1 : b.colorInfo.colorTransfer;
+        return at == bt;
     }
 
     // Exo 2.10 and up
