@@ -33,6 +33,11 @@ jobs:
         run: |
           grep -Fq "include 'armeabi-v7a'" smarttubetv/build.gradle
           grep -q "universalApk false" smarttubetv/build.gradle
+          if grep -Eq "^[[:space:]]*abiFilters[[:space:]]" smarttubetv/build.gradle; then
+            echo "::error::Remove ndk abiFilters: it conflicts with splits.abi"
+            exit 1
+          fi
+          grep -Fq 'applicationId "app.smarttube.l1.beta"' smarttubetv/build.gradle
 
       - name: Build ARMv7 debug APK
         run: |
