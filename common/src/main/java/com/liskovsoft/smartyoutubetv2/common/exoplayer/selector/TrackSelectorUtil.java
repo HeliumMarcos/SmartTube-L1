@@ -427,14 +427,18 @@ public class TrackSelectorUtil {
      * Only show a channel layout when it is explicitly reported by the stream.
      */
     public static String buildReadableAudioTrackName(Format format) {
-        String label = buildAudioCodecLabel(format);
-        label = joinWithSeparator(label, buildChannels(format));
-        if (format.bitrate > 0) {
-            label = joinWithSeparator(label, Math.round(format.bitrate / 1000f) + " kbps");
+        // A two-line label keeps the codec prominent on a TV screen.
+        // The second line provides a concise technical summary.
+        String title = buildAudioCodecLabel(format);
+        String details = buildChannels(format);
+        if (format != null && format.bitrate > 0) {
+            details = joinWithSeparator(details, Math.round(format.bitrate / 1000f) + " kbps");
         }
-        label = joinWithSeparator(label, buildLanguageString(format));
-        label = joinWithSeparator(label, buildDrcMark(format));
-        return label;
+        if (format != null) {
+            details = joinWithSeparator(details, buildLanguageString(format));
+            details = joinWithSeparator(details, buildDrcMark(format));
+        }
+        return details.isEmpty() ? title : title + "\n" + details;
     }
 
     public static String buildAudioCodecLabel(Format format) {
