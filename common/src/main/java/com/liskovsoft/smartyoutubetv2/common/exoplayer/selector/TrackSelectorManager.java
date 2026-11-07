@@ -649,11 +649,19 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         boolean opus = codec.startsWith("opus") || "audio/opus".equals(mime);
         boolean aac = codec.startsWith("mp4a") || "audio/mp4a-latm".equals(mime);
         boolean surround = format.channelCount >= 6;
+        // Some YouTube audio formats report channelCount=NO_VALUE (-1).
+        // Unknown channel metadata must not demote a Dolby stream below stereo
+        // Opus/AAC. Prefer Dolby when playback is supported; never claim 5.1
+        // until channelCount is actually known.
         int tier;
-        if (surround) {
-            tier = eac3 ? 80 : ac3 ? 70 : opus ? 60 : aac ? 50 : 40;
+        if (eac3) {
+            tier = surround ? 90 : 75;
+        } else if (ac3) {
+            tier = surround ? 80 : 65;
+        } else if (surround) {
+            tier = opus ? 60 : aac ? 50 : 40;
         } else {
-            tier = opus ? 30 : aac ? 25 : eac3 ? 20 : ac3 ? 15 : 10;
+            tier = opus ? 30 : aac ? 25 : 10;
         }
         // Bitstream-capable outputs break ties but do not override channel tiers.
         int passthroughBonus = capabilities.hasEncodedOutput(format) ? 5 : 0;
