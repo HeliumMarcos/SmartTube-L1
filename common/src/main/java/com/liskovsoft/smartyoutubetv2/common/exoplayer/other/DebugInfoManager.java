@@ -258,6 +258,19 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
                 toHumanReadable(video.bitrate),
                 toHumanReadable(audio.bitrate)
         )));
+        // Report the active ExoPlayer audio format, not an assumed HDMI output.
+        mVideoInfo.add(new Pair<>("Audio codec", audio.codecs != null
+                ? audio.codecs : getFormatMimeType(audio)));
+        mVideoInfo.add(new Pair<>("Audio channels", audio.channelCount > 0
+                ? com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorUtil.buildChannels(audio)
+                : "unknown (not reported)"));
+        mVideoInfo.add(new Pair<>("Audio sample rate", audio.sampleRate > 0
+                ? audio.sampleRate + " Hz" : NOT_AVAILABLE));
+        mVideoInfo.add(new Pair<>("Audio bitrate", toHumanReadable(audio.bitrate)));
+        mVideoInfo.add(new Pair<>("Audio language", audio.language != null
+                ? audio.language : NOT_AVAILABLE));
+        mVideoInfo.add(new Pair<>("Audio DRC", String.valueOf(audio.isDrc)));
+        mVideoInfo.add(new Pair<>("Audio output", "Not verified (PCM / passthrough unknown)"));
         // Aspect info is not valid since we're using custom views
         //String par = video.pixelWidthHeightRatio == Format.NO_VALUE ||
         //        video.pixelWidthHeightRatio == 1f ?
