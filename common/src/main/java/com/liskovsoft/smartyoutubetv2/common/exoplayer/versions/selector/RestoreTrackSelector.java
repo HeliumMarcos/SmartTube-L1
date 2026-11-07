@@ -125,6 +125,16 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
     @Override
     protected Definition selectVideoTrack(TrackGroupArray groups, int[][] formatSupports, int mixedMimeTypeAdaptationSupports,
                                               Parameters params, boolean enableAdaptiveTrackSelection) throws ExoPlaybackException {
+        // Automatic video must remain adaptive; custom single-track definitions
+        // would prevent bandwidth-driven quality switching.
+        if (mCallback instanceof com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager
+                && ((com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager) mCallback)
+                        .isAutomaticVideoSelection()) {
+            Log.d(TAG, "selectVideoTrack: ExoPlayer adaptive automatic quality");
+            return super.selectVideoTrack(groups, formatSupports,
+                    mixedMimeTypeAdaptationSupports, params, enableAdaptiveTrackSelection);
+        }
+
         if (mCallback != null) {
             Pair<Definition, MediaTrack> resultPair = mCallback.onSelectVideoTrack(groups, params);
 
