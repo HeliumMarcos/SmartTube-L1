@@ -9,6 +9,7 @@ import android.media.MediaCodecList;
 import android.os.Build;
 
 import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.audio.AudioCapabilities;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.liskovsoft.sharedutils.mylogger.Log;
 
@@ -22,14 +23,21 @@ public final class AudioOutputCapabilities {
     private final boolean ac3Output;
     private final boolean eac3Output;
     private final boolean ac3Decoder;
+    private final boolean sinkAc3;
+    private final boolean sinkEac3;
+    private final int sinkMaxChannels;
     private final boolean eac3Decoder;
 
     private AudioOutputCapabilities(boolean ac3Output, boolean eac3Output,
-                                    boolean ac3Decoder, boolean eac3Decoder) {
+                                    boolean ac3Decoder, boolean eac3Decoder,
+                                    boolean sinkAc3, boolean sinkEac3, int sinkMaxChannels) {
         this.ac3Output = ac3Output;
         this.eac3Output = eac3Output;
         this.ac3Decoder = ac3Decoder;
         this.eac3Decoder = eac3Decoder;
+        this.sinkAc3 = sinkAc3;
+        this.sinkEac3 = sinkEac3;
+        this.sinkMaxChannels = sinkMaxChannels;
     }
 
     public static AudioOutputCapabilities query(Context context) {
@@ -54,12 +62,18 @@ public final class AudioOutputCapabilities {
                 }
             }
         }
+        AudioCapabilities sink = AudioCapabilities.getCapabilities(context);
         AudioOutputCapabilities result = new AudioOutputCapabilities(
-                ac3, eac3, hasDecoder(MimeTypes.AUDIO_AC3), hasDecoder(MimeTypes.AUDIO_E_AC3));
+                ac3, eac3, hasDecoder(MimeTypes.AUDIO_AC3), hasDecoder(MimeTypes.AUDIO_E_AC3),
+                sink.supportsEncoding(AudioFormat.ENCODING_AC3),
+                sink.supportsEncoding(AudioFormat.ENCODING_E_AC3), sink.getMaxChannelCount());
         Log.d(TAG, "Reported HDMI encoded output: AC3=" + result.ac3Output
                 + ", EAC3=" + result.eac3Output
                 + "; device decoders: AC3=" + result.ac3Decoder
                 + ", EAC3=" + result.eac3Decoder
+                + "; ExoPlayer sink AC3=" + result.sinkAc3
+                + ", EAC3=" + result.sinkEac3
+                + ", max channels=" + result.sinkMaxChannels
                 + ". Decoder support does not imply passthrough.");
         return result;
     }
@@ -91,12 +105,16 @@ public final class AudioOutputCapabilities {
         String codec = format.codecs != null ? format.codecs.toLowerCase(java.util.Locale.US) : "";
         String mime = format.sampleMimeType != null ? format.sampleMimeType : "";
         if (mime.equals(MimeTypes.AUDIO_E_AC3) || codec.startsWith("ec-3")) {
-            return eac3Output || eac3Decoder;
+            return eac3Decoder || (sinkEac3 && channelFits(format));
         }
         if (mime.equals(MimeTypes.AUDIO_AC3) || codec.startsWith("ac-3")) {
-            return ac3Output || ac3Decoder;
+            return ac3Decoder || (sinkAc3 && channelFits(format));
         }
         return true; // Other formats are still filtered by ExoPlayer's track mapping.
+    }
+
+    private boolean channelFits(Format format) {
+        return format.channelCount <= 0 || format.channelCount <= sinkMaxChannels;
     }
 
     public boolean hasEncodedOutput(Format format) {
@@ -104,9 +122,9 @@ public final class AudioOutputCapabilities {
             return false;
         }
         String codec = format.codecs != null ? format.codecs.toLowerCase(java.util.Locale.US) : "";
-        return (eac3Output && (MimeTypes.AUDIO_E_AC3.equals(format.sampleMimeType)
+        return (sinkEac3 && channelFits(format) && (MimeTypes.AUDIO_E_AC3.equals(format.sampleMimeType)
                 || codec.startsWith("ec-3")))
-                || (ac3Output && (MimeTypes.AUDIO_AC3.equals(format.sampleMimeType)
+                || (sinkAc3 && channelFits(format) && (MimeTypes.AUDIO_AC3.equals(format.sampleMimeType)
                 || codec.startsWith("ac-3")));
     }
 }
