@@ -689,7 +689,7 @@ public class TrackSelectorManager implements TrackSelectorCallback {
      * Bitrate is compared last because different codecs are not directly
      * comparable at equal Mbps. ExoPlayer still handles buffering and errors.
      */
-    private static int compareAutomaticVideo(Format left, Format right) {
+    public static int compareAutomaticVideo(Format left, Format right) {
         int a = TrackSelectorUtil.getRealHeight(left);
         int b = TrackSelectorUtil.getRealHeight(right);
         int cmp = Integer.compare(a, b);
