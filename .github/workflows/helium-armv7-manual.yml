@@ -32,6 +32,32 @@ jobs:
           java-version: '17'
           cache: gradle
 
+      - name: Restore persistent signing key
+        shell: bash
+        env:
+          L1_KEYSTORE_BASE64: ${{ secrets.L1_KEYSTORE_BASE64 }}
+          L1_STORE_PASSWORD: ${{ secrets.L1_STORE_PASSWORD }}
+          L1_KEY_ALIAS: ${{ secrets.L1_KEY_ALIAS }}
+          L1_KEY_PASSWORD: ${{ secrets.L1_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for key in L1_KEYSTORE_BASE64 L1_STORE_PASSWORD L1_KEY_ALIAS L1_KEY_PASSWORD; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing signing secret $key. Configure a persistent signing key before releasing updateable APKs."
+              exit 1
+            fi
+          done
+          printf '%s' "$L1_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/l1-signing.jks"
+          chmod 600 "$RUNNER_TEMP/l1-signing.jks"
+          {
+            printf 'storeFile=%s\n' "$RUNNER_TEMP/l1-signing.jks"
+            printf 'storePassword=%s\n' "$L1_STORE_PASSWORD"
+            printf 'keyAlias=%s\n' "$L1_KEY_ALIAS"
+            printf 'keyPassword=%s\n' "$L1_KEY_PASSWORD"
+          } > keystore.properties
+          chmod 600 keystore.properties
+          keytool -list -keystore "$RUNNER_TEMP/l1-signing.jks" -storepass "$L1_STORE_PASSWORD" -alias "$L1_KEY_ALIAS" >/dev/null
+
       - name: Verify ARMv7-only configuration
         shell: bash
         run: |
@@ -47,6 +73,15 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew :smarttubetv:assembleStbetaDebug --no-daemon
+
+      - name: Verify APK signature and update version
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="$(find smarttubetv/build/outputs/apk -type f -name '*armeabi-v7a.apk' -print -quit)"
+          test -n "$apk"
+          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs "$apk"
+          echo "CI versionCode: $((2462 + GITHUB_RUN_NUMBER))" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload ARMv7 APK only
         uses: actions/upload-artifact@v5
