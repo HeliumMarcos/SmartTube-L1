@@ -13,6 +13,7 @@ import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.mediacodec.MediaCodecSelector;
 import com.google.android.exoplayer2.util.AmazonQuirks;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
+import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.selector.BlacklistMediaCodecSelector;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerData;
 import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
@@ -42,7 +43,9 @@ public class CustomOverridesRenderersFactory extends CustomRenderersFactoryBase 
         mPlayerTweaksData = PlayerTweaksData.instance(activity);
 
         setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON);
-        // setEnableDecoderFallback(true); // Exo 2.10 and up
+        // Retry another platform decoder when the preferred one cannot initialize.
+        // This does not transcode Dolby audio or force HDMI passthrough.
+        setEnableDecoderFallback(true);
 
         if (mPlayerTweaksData.isSWDecoderForced()) {
             setMediaCodecSelector(new BlacklistMediaCodecSelector());
