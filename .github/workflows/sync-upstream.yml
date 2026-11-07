@@ -1,0 +1,63 @@
+name: Sync upstream and propose enhanced update
+
+on:
+  schedule:
+    - cron: '17 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: smarttube-upstream-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Update master only when fast-forward is possible
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/yuliskov/SmartTube.git
+          git fetch upstream master
+          git checkout master
+          git merge --ff-only upstream/master
+          git push origin master
+
+      - name: Propose upstream changes to enhanced branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin master helium-enhanced
+          if git merge-base --is-ancestor origin/master origin/helium-enhanced; then
+            echo "Enhanced already contains current master."
+            exit 0
+          fi
+          git checkout -B automation/upstream-into-helium origin/helium-enhanced
+          if ! git merge --no-edit origin/master; then
+            echo "::error::Upstream conflicts with enhanced branch. Resolve manually; no changes were pushed."
+            exit 1
+          fi
+          git push --force-with-lease origin HEAD:refs/heads/automation/upstream-into-helium
+          existing=$(gh pr list --head automation/upstream-into-helium --base helium-enhanced --state open --json number --jq '.[0].number // empty')
+          if [ -z "$existing" ]; then
+            gh pr create --base helium-enhanced --head automation/upstream-into-helium \
+              --title "chore: integrate latest SmartTube upstream" \
+              --body "Automated upstream integration proposal. Review changes and validate build/audio playback before merging."
+          else
+            echo "Updated existing PR #$existing"
+          fi
