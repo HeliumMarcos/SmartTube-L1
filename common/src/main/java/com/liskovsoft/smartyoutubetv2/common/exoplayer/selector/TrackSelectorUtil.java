@@ -205,7 +205,20 @@ public class TrackSelectorUtil {
     }
 
     public static String buildChannels(Format format) {
-        return is51Audio(format) ? "5.1" : "";
+        if (format == null || format.channelCount == Format.NO_VALUE || format.channelCount <= 0) {
+            return "canais não informados";
+        }
+        switch (format.channelCount) {
+            case 1: return "1.0 mono";
+            case 2: return "2.0 estéreo";
+            case 3: return "3.0";
+            case 4: return "4.0 surround";
+            case 5: return "5.0 surround";
+            case 6: return "5.1 surround";
+            case 7: return "6.1 surround";
+            case 8: return "7.1 surround";
+            default: return format.channelCount + " canais";
+        }
     }
 
     public static String buildDrcMark(Format format) {
