@@ -157,22 +157,17 @@ android {
     // NOTE: The main goal of prefixing a flavor is to group flavors' folders together
     productFlavors {
         stbeta {
-            applicationId "org.smarttube.beta"
+            applicationId "app.smarttube.l1.beta"
             targetSdkVersion project.properties.compileSdkVersion
         }
         ststable {
-            applicationId "org.smarttube.stable"
+            applicationId "app.smarttube.l1.stable"
             targetSdkVersion project.properties.compileSdkVersion
         }
         stfdroid {
-            applicationId "app.smarttube.fdroid"
+            applicationId "app.smarttube.l1.fdroid"
             minSdkVersion 21
             targetSdkVersion project.properties.compileSdkVersion
-
-            // The content of Universal apk
-            ndk {
-                abiFilters 'armeabi-v7a'
-            }
         }
     }
 }
