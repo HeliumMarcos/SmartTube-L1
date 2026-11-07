@@ -686,17 +686,28 @@ public class TrackSelectorManager implements TrackSelectorCallback {
                 right.frameRate > 0 ? right.frameRate : 0);
         if (cmp != 0) return cmp;
 
+        // Bitrates from different codecs are not equivalent. However, a
+        // substantial bitrate advantage can outweigh a small codec preference.
+        // Avoid declaring an AV1 encode superior solely by its codec name.
+        int leftBitrate = Math.max(0, left.bitrate);
+        int rightBitrate = Math.max(0, right.bitrate);
+        if (leftBitrate > 0 && rightBitrate > 0) {
+            long high = Math.max(leftBitrate, rightBitrate);
+            long low = Math.min(leftBitrate, rightBitrate);
+            if (high * 100L >= low * 150L) {
+                return Integer.compare(leftBitrate, rightBitrate);
+            }
+        }
         cmp = Integer.compare(automaticVideoCodecRank(left), automaticVideoCodecRank(right));
         if (cmp != 0) return cmp;
-
-        return Integer.compare(left.bitrate > 0 ? left.bitrate : 0,
-                right.bitrate > 0 ? right.bitrate : 0);
+        return Integer.compare(leftBitrate, rightBitrate);
     }
 
     private static boolean isAutomaticHdr(Format format) {
         return format.colorInfo != null
                 && (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084
-                || format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG);
+                || format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG)
+                || TrackSelectorUtil.isHdrFormat(format);
     }
 
     private static int automaticVideoCodecRank(Format format) {
