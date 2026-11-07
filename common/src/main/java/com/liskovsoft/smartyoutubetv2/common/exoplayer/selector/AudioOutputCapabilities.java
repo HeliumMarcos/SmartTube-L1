@@ -65,6 +65,9 @@ public final class AudioOutputCapabilities {
     }
 
     private static boolean hasDecoder(String mime) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            return false; // MediaCodecList.getCodecInfos() requires API 21.
+        }
         try {
             for (MediaCodecInfo info : new MediaCodecList(MediaCodecList.REGULAR_CODECS).getCodecInfos()) {
                 if (!info.isEncoder()) {
