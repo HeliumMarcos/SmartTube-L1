@@ -555,6 +555,34 @@ public class TrackSelectorManager implements TrackSelectorCallback {
             }
         }
 
+        // For a codec preference (rather than an explicitly selected track), prefer
+        // the available multichannel variant of the SAME codec. Never synthesize
+        // channels, bypass the existing supported-track filtering, or override a
+        // manually selected track ID.
+        if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO
+                && originTrack.format != null && originTrack.format.id == null
+                && result != null && result.format != null) {
+            MediaTrack[][] audioGroups = filterByLanguage(renderer.mediaTracks, originTrack);
+            for (MediaTrack[] audioGroup : audioGroups) {
+                if (audioGroup == null) {
+                    continue;
+                }
+                for (MediaTrack candidate : audioGroup) {
+                    if (candidate == null || candidate.format == null || hasPlaybackGlitch(candidate)
+                            || !MediaTrack.codecEquals(candidate, originTrack)
+                            || originTrack.inBounds(candidate) < 0) {
+                        continue;
+                    }
+                    int currentChannels = result.format.channelCount;
+                    int candidateChannels = candidate.format.channelCount;
+                    if (candidateChannels > currentChannels
+                            && candidateChannels >= 6) {
+                        result = candidate;
+                    }
+                }
+            }
+        }
+
         Log.d(TAG, "findBestMatch: Found: " + result.format);
         if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO && result.format != null) {
             Format selectedAudio = result.format;
