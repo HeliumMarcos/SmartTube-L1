@@ -289,7 +289,7 @@ public class AppDialogUtil {
         FormatItem automatic = ExoFormatItem.fromAudioSpecs("auto,null");
         options.add(UiOptionItem.from(context.getString(R.string.audio_preset_auto),
                 option -> playerData.setFormat(automatic),
-                selected == null || selected.equals(automatic)));
+                automatic.equals(selected)));
 
         addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_eac3), "ec-3");
         addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_ac3), "ac-3");
