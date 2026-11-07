@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: helium-armv7-manual
@@ -51,3 +51,23 @@ jobs:
           path: smarttubetv/build/outputs/apk/**/*armeabi-v7a.apk
           if-no-files-found: error
           retention-days: 7
+
+      - name: Publish direct APK download in GitHub Releases
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mapfile -t apks < <(find smarttubetv/build/outputs/apk -type f -name '*armeabi-v7a.apk')
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one ARMv7 APK, found ${#apks[@]}"
+            exit 1
+          fi
+          tag="l1-armv7-build-${GITHUB_RUN_NUMBER}"
+          gh release create "$tag" "${apks[0]}#SmartTube-L1-ARMv7.apk" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target helium-enhanced \
+            --title "SmartTube-L1 ARMv7 test build ${GITHUB_RUN_NUMBER}" \
+            --notes "Automated ARMv7 debug test APK from helium-enhanced. Experimental audio selection and diagnostics; validate on TV." \
+            --prerelease
+          echo "Direct APK: https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/SmartTube-L1-ARMv7.apk" >> "$GITHUB_STEP_SUMMARY"
