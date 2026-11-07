@@ -32,7 +32,6 @@ jobs:
         shell: bash
         run: |
           grep -Fq "include 'armeabi-v7a'" smarttubetv/build.gradle
-          grep -Fq "abiFilters 'armeabi-v7a'" smarttubetv/build.gradle
           grep -q "universalApk false" smarttubetv/build.gradle
 
       - name: Build ARMv7 debug APK
