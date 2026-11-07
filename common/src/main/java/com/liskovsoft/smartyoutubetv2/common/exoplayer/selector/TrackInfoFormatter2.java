@@ -10,6 +10,7 @@ public class TrackInfoFormatter2 {
     private String mHdrStr;
     private String mSpeedStr;
     private String mChannelsStr;
+    private String mAudioDetailsStr;
     private String mHighBitrateStr;
     private boolean mEnableBitrate;
     private String mDrcStr;
@@ -60,7 +61,7 @@ public class TrackInfoFormatter2 {
     }
 
     public String getQualityLabel() {
-        return combine(mResolutionStr, mFpsStr, mCodecStr, mBitrateStr, mHdrStr, mChannelsStr, mSpeedStr, mHighBitrateStr, mDrcStr);
+        return combine(mResolutionStr, mFpsStr, mCodecStr, mBitrateStr, mHdrStr, mAudioDetailsStr, mChannelsStr, mSpeedStr, mHighBitrateStr, mDrcStr);
     }
 
     private static String combine(String... items) {
