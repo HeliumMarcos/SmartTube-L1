@@ -30,15 +30,10 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
-// The first letter of the flavor name must be in uppercase
-if (new File("${projectDir}/google-services.json").exists() && (getGradle().getStartParameter().getTaskRequests().toString().contains("Stbeta") ||
-        getGradle().getStartParameter().getTaskRequests().toString().contains("Ststable"))) {
-    // Google Services Gradle plugin (transforms google-services.json file)
-    apply plugin: 'com.google.gms.google-services'
-
-    // Apply the Crashlytics Gradle plugin
-    apply plugin: 'com.google.firebase.crashlytics'
-}
+// SmartTube-L1 uses its own application IDs. The upstream Firebase
+// google-services.json is registered for different package names and must
+// not be applied to this fork without a dedicated Firebase project.
+// Crashlytics and Google Services are intentionally disabled.
 
 android {
     // FIX: Default interface methods are only supported starting with Android N (--min-api 24)
