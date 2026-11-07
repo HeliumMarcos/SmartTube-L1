@@ -36,6 +36,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.dialogs.menu.provide
 import com.liskovsoft.smartyoutubetv2.common.app.views.ViewManager;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.other.SubtitleManager.SubtitleStyle;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.ExoFormatItem;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.FormatItem.VideoPreset;
 import com.liskovsoft.smartyoutubetv2.common.misc.AppDataSourceManager;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
@@ -67,6 +68,7 @@ public class AppDialogUtil {
     private static final int VIDEO_BUFFER_ID = 134;
     private static final int BACKGROUND_PLAYBACK_ID = 135;
     private static final int VIDEO_PRESETS_ID = 136;
+    private static final int AUDIO_PRESETS_ID = 150;
     private static final int AUDIO_DELAY_ID = 137;
     private static final int AUDIO_LANGUAGE_ID = 138;
     private static final int PLAYER_SCREEN_TIMEOUT_ID = 139;
@@ -273,6 +275,37 @@ public class AppDialogUtil {
                         onFormatSelected
                 )
         );
+    }
+
+    /**
+     * Selects a preferred available YouTube audio codec. This does not transcode audio,
+     * manufacture 5.1 tracks, or override Android decoder/passthrough capabilities.
+     */
+    public static OptionCategory createAudioPresetsCategory(Context context) {
+        PlayerData playerData = PlayerData.instance(context);
+        FormatItem selected = playerData.getFormat(FormatItem.TYPE_AUDIO);
+        List<OptionItem> options = new ArrayList<>();
+
+        FormatItem automatic = playerData.getDefaultAudioFormat();
+        options.add(UiOptionItem.from("Automatic (device default)",
+                option -> playerData.setFormat(automatic),
+                selected == null || selected.equals(automatic)));
+
+        addAudioPreset(options, playerData, selected, "Dolby Digital Plus (E-AC-3)", "ec-3");
+        addAudioPreset(options, playerData, selected, "Dolby Digital (AC-3)", "ac-3");
+        addAudioPreset(options, playerData, selected, "AAC", "mp4a");
+        addAudioPreset(options, playerData, selected, "Opus", "opus");
+
+        return OptionCategory.from(AUDIO_PRESETS_ID, OptionCategory.TYPE_RADIO_LIST,
+                "Audio presets", options);
+    }
+
+    private static void addAudioPreset(List<OptionItem> options, PlayerData playerData,
+                                       FormatItem selected, String label, String codec) {
+        FormatItem format = ExoFormatItem.fromAudioSpecs(codec + ",null");
+        options.add(UiOptionItem.from(label,
+                option -> playerData.setFormat(format),
+                format.equals(selected)));
     }
 
     private static List<OptionItem> fromPresets(Context context, VideoPreset[] presets, Runnable onFormatSelected) {
