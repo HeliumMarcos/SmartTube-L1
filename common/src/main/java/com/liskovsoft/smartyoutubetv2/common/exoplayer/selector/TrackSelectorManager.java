@@ -556,6 +556,15 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         }
 
         Log.d(TAG, "findBestMatch: Found: " + result.format);
+        if (originTrack.rendererIndex == RENDERER_INDEX_AUDIO && result.format != null) {
+            Format selectedAudio = result.format;
+            Log.d(TAG, "Audio selection: mime=" + selectedAudio.sampleMimeType
+                    + ", codecs=" + selectedAudio.codecs
+                    + ", channels=" + selectedAudio.channelCount
+                    + ", bitrate=" + selectedAudio.bitrate
+                    + ", sampleRate=" + selectedAudio.sampleRate
+                    + ", language=" + selectedAudio.language);
+        }
 
         return result;
     }
