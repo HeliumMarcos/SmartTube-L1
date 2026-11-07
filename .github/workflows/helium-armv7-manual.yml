@@ -2,6 +2,10 @@ name: Helium ARMv7 APK (manual)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [helium-enhanced]
+    paths:
+      - '.github/workflows/helium-armv7-manual.yml'
 
 permissions:
   contents: write
@@ -64,7 +68,8 @@ jobs:
             exit 1
           fi
           tag="l1-armv7-build-${GITHUB_RUN_NUMBER}"
-          gh release create "$tag" "${apks[0]}#SmartTube-L1-ARMv7.apk" \
+          cp "${apks[0]}" SmartTube-L1-ARMv7.apk
+          gh release create "$tag" SmartTube-L1-ARMv7.apk \
             --repo "$GITHUB_REPOSITORY" \
             --target helium-enhanced \
             --title "SmartTube-L1 ARMv7 test build ${GITHUB_RUN_NUMBER}" \
