@@ -4,6 +4,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.graphics.Color;
+import android.text.SpannableStringBuilder;
+import android.text.style.BackgroundColorSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import android.os.Build.VERSION;
 import android.util.Pair;
 import android.view.View;
@@ -35,6 +42,7 @@ import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
  */
 public class VideoCardPresenter extends LongClickPresenter {
     private static final String TAG = VideoCardPresenter.class.getSimpleName();
+    private static final Pattern QUALITY_PREFIX = Pattern.compile("^(?:\\s*)(4K|8K|1080p|1440p)(?=\\s|[·•|]|$)", Pattern.CASE_INSENSITIVE);
     private int mDefaultBackgroundColor = -1;
     private int mDefaultTextColor = -1;
     private int mSelectedBackgroundColor = -1;
@@ -132,7 +140,7 @@ public class VideoCardPresenter extends LongClickPresenter {
         Context context = cardView.getContext();
 
         cardView.setTitleText(video.getTitle());
-        cardView.setContentText(video.getSecondTitle());
+        cardView.setContentText(formatQualityMetadata(video.getSecondTitle()));
         // Count progress that very close to zero. E.g. when user closed video immediately.
         cardView.setProgress(video.percentWatched > 0 && video.percentWatched < 1 ? 1 : Math.round(video.percentWatched));
         cardView.setBadgeText(
@@ -177,6 +185,20 @@ public class VideoCardPresenter extends LongClickPresenter {
                         .error(R.drawable.card_placeholder) // R.color.lb_grey
                 )
                 .into(cardView.getMainImageView());
+    }
+
+    /** Highlight only quality metadata actually provided by the video service. */
+    private CharSequence formatQualityMetadata(CharSequence subtitle) {
+        if (subtitle == null) return null;
+        Matcher matcher = QUALITY_PREFIX.matcher(subtitle);
+        if (!matcher.find()) return subtitle;
+        SpannableStringBuilder styled = new SpannableStringBuilder(subtitle);
+        int start = matcher.start(1);
+        int end = matcher.end(1);
+        styled.setSpan(new BackgroundColorSpan(0xFF555B67), start, end, 0);
+        styled.setSpan(new ForegroundColorSpan(Color.WHITE), start, end, 0);
+        styled.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, end, 0);
+        return styled;
     }
 
     @Override
