@@ -541,5 +541,4 @@ public class TrackSelectorUtil {
         String shortCodec = extractCodec(format);
         return shortCodec == null ? "" : shortCodec.toUpperCase(java.util.Locale.US);
     }
-
-
+}
