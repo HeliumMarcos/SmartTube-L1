@@ -926,6 +926,16 @@ public class AppDialogUtil {
                 },
                 playerTweaksData.getPlayerDataSource() == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP));
 
+        if (android.os.Build.VERSION.SDK_INT >= 34) {
+            options.add(UiOptionItem.from("HttpEngine (Android 14+)",
+                    context.getString(R.string.http_engine_test_desc),
+                    option -> {
+                        playerTweaksData.setPlayerDataSource(PlayerTweaksData.PLAYER_DATA_SOURCE_HTTP_ENGINE);
+                        onModeSelected.run();
+                    },
+                    playerTweaksData.getPlayerDataSource() == PlayerTweaksData.PLAYER_DATA_SOURCE_HTTP_ENGINE));
+        }
+
         return OptionCategory.from(
                 PLAYER_ENGINE_ID,
                 OptionCategory.TYPE_RADIO_LIST,
