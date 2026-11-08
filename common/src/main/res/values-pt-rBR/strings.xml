@@ -574,6 +574,7 @@
     <string name="cronet_desc">Cronet é a rota de rede do Chromium. O Cronet pode reduzir a latência e aumentar a desempenho da rede, o que pode ajudar com problemas de buffering.</string>
     <string name="unlock_all_formats">Desbloquear todos os formatos de vídeo</string>
     <string name="unlock_all_formats_desc">Em alguns dispositivos o firmware apresenta incorretamente alguns formatos como não suportados, mesmo que eles sejam.\n (ex. Smart TVs 1080p costumam reportar o 4K como não suportado).</string>
+    <string name="http_engine_test_desc">Motor de rede experimental do Android 14+ para comparar a reprodução com o Cronet. Reinicie o vídeo após trocar o motor.</string>
     <string name="okhttp_desc">Rota alternativa com suporte a HTTP/2. O desempenho depende da conexão e do servidor.</string>
     <string name="select_channel_section">Abrir a seção correspondente quando o aplicativo for iniciado por canais da Android TV</string>
     <string name="enable_voice_search_desc">O aplicativo oficial será substituído por uma ponte. Uma ponte ajuda a transferir resultados de pesquisas globais ao nosso aplicativo.</string>
