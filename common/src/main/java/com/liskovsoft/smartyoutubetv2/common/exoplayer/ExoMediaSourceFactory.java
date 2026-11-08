@@ -39,7 +39,6 @@ import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
 import com.liskovsoft.sharedutils.cronet.CronetManager;
 import com.liskovsoft.sharedutils.helpers.FileHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
-import com.liskovsoft.smartyoutubetv2.common.BuildConfig;
 import com.liskovsoft.sharedutils.okhttp.OkHttpManager;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.errors.DashDefaultLoadErrorHandlingPolicy;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.errors.SabrDefaultLoadErrorHandlingPolicy;
@@ -136,15 +135,9 @@ public class ExoMediaSourceFactory {
         PlayerTweaksData tweaksData = PlayerTweaksData.instance(mContext);
         int source = tweaksData.getPlayerDataSource();
         DefaultBandwidthMeter bandwidthMeter = useBandwidthMeter ? BANDWIDTH_METER : null;
-        HttpDataSource.Factory factory = source == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP
-                ? buildOkHttpDataSourceFactory(bandwidthMeter, readTimeoutMs)
-                : source == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET && CronetManager.getEngine(mContext) != null
-                        ? buildCronetDataSourceFactory(bandwidthMeter, readTimeoutMs)
-                        : buildDefaultHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
-        if (BuildConfig.DEBUG) {
-            Log.d(TAG, "Media network: " + factory.getClass().getSimpleName());
-        }
-        return factory;
+        return source == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP ? buildOkHttpDataSourceFactory(bandwidthMeter, readTimeoutMs) :
+                        source == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET && CronetManager.getEngine(mContext) != null ? buildCronetDataSourceFactory(bandwidthMeter, readTimeoutMs) :
+                                buildDefaultHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
     }
 
     @SuppressWarnings("deprecation")

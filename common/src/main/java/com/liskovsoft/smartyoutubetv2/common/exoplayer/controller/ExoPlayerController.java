@@ -3,7 +3,6 @@ package com.liskovsoft.smartyoutubetv2.common.exoplayer.controller;
 import android.content.Context;
 import android.os.Build;
 import android.os.Build.VERSION;
-import android.view.Surface;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -11,12 +10,9 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.analytics.AnalyticsListener;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.MediaSourceEventListener.LoadEventInfo;
-import com.google.android.exoplayer2.source.MediaSourceEventListener.MediaLoadData;
 import com.google.android.exoplayer2.source.MergingMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.sabr.SabrMediaSource;
@@ -55,7 +51,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ExoPlayerController implements Player.EventListener, VideoRendererEventListener,
-        AudioRendererEventListener, AnalyticsListener, LiveStateProvider {
+        AudioRendererEventListener, LiveStateProvider {
     private static final String TAG = ExoPlayerController.class.getSimpleName();
     /** How far from the live edge (in segments) the playback is considered to be on the edge */
     private static final int SABR_LIVE_EDGE_TOLERANCE_SEGMENTS = 4;
@@ -306,9 +302,6 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
         player.addListener(this);
         player.addVideoDebugListener(this);
         player.addAudioDebugListener(this);
-        if (BuildConfig.DEBUG) {
-            player.addAnalyticsListener(this);
-        }
     }
 
     //@Override
@@ -414,21 +407,6 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
         // Manage audio focus. E.g. use Spotify when audio is disabled. (NOT NEEDED!!!)
         //MediaTrack audioTrack = mTrackSelectorManager.getAudioTrack();
         //ExoPlayerInitializer.enableAudioFocus(mPlayer, audioTrack != null && !audioTrack.isEmpty());
-    }
-
-    @Override
-    public void onLoadCompleted(EventTime eventTime, LoadEventInfo load, MediaLoadData media) {
-        if (media.dataType == C.DATA_TYPE_MEDIA && load.bytesLoaded > 0 && load.loadDurationMs > 0) {
-            Log.d(TAG, "Media load: bytes=" + load.bytesLoaded + ", elapsedMs=" + load.loadDurationMs
-                    + ", type=" + media.trackType);
-        }
-    }
-
-    @Override
-    public void onRenderedFirstFrame(Surface surface) {
-        if (BuildConfig.DEBUG && surface != null) {
-            Log.d(TAG, "First video frame rendered");
-        }
     }
 
     @Override
@@ -704,9 +682,6 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
             mPlayer.removeListener(this);
             mPlayer.removeVideoDebugListener(this);
             mPlayer.removeAudioDebugListener(this);
-            if (BuildConfig.DEBUG) {
-                mPlayer.removeAnalyticsListener(this);
-            }
             mPlayer.stop(true); // Cause input lags due to high cpu load?
             mPlayer.clearVideoSurface();
             mPlayer.release();
