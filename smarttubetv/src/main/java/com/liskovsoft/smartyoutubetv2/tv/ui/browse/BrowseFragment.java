@@ -153,6 +153,8 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         View root = super.onCreateView(inflater, container, savedInstanceState);
 
         mProgressBarManager.setRootView((ViewGroup) root);
+        View expandedHeaders = root.findViewById(androidx.leanback.R.id.browse_headers_dock);
+        if (expandedHeaders != null) expandedHeaders.setBackgroundColor(0xFF12171D);
         mBrowseContentDock = root.findViewById(androidx.leanback.R.id.browse_container_dock);
         if (mBrowseContentDock != null) {
             mOriginalContentPaddingStart = mBrowseContentDock.getPaddingStart();
@@ -160,6 +162,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         if (root instanceof FrameLayout) {
             mCompactNavigationRail = new LinearLayout(getContext());
             mCompactNavigationRail.setOrientation(LinearLayout.VERTICAL);
+            mCompactNavigationRail.setPadding(0, navDp(18), 0, navDp(10));
             mCompactNavigationRail.setFocusable(false);
             mCompactNavigationRail.setClickable(false);
             mCompactNavigationRail.setBackgroundColor(0xF212171D);
