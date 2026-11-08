@@ -192,7 +192,8 @@ public class ViewUtil {
         }
         int id = ((AppDialogView) parent).getViewId();
         return id == R.id.playback_quality_dialog || id == R.id.l1_speed_dialog
-                || id == R.id.l1_subtitles_dialog || id == R.id.l1_playlist_dialog;
+                || id == R.id.l1_subtitles_dialog || id == R.id.l1_playlist_dialog
+                || id == R.id.l1_description_dialog || id == R.id.l1_comments_dialog;
     }
 
     /**
