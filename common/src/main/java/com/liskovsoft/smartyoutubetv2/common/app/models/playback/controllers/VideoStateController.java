@@ -348,6 +348,8 @@ public class VideoStateController extends BasePlayerController {
         // suppose live stream if buffering near the end
         // boolean isStream = Math.abs(player.getDuration() - player.getCurrentPosition()) < 10_000;
         settingsPresenter.appendCategory(AppDialogUtil.createSpeedListCategory(getContext(), getPlayer()));
+        // Apply the shared L1 visual style without affecting speed selection semantics.
+        settingsPresenter.setId(R.id.l1_speed_dialog);
 
         settingsPresenter.showDialog(getContext().getString(R.string.video_speed), () -> {
             State state = getStateService().getByVideoId(getVideo() != null ? getVideo().videoId : null);
