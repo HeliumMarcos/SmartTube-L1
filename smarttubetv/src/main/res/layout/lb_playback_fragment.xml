@@ -94,16 +94,16 @@
 
     <!-- Add debug view -->
     <FrameLayout android:id="@+id/debug_view_group"
-                 android:layout_width="1100dp"
-                 android:layout_height="wrap_content"
+                 android:layout_width="480dp"
+                 android:layout_height="match_parent"
                  android:layout_margin="12dp"
                  android:padding="4dp"
                  android:visibility="gone"
-                 android:layout_gravity="center"
+                 android:layout_gravity="top|end"
                  android:focusable="false"
                  android:clickable="false"
                  android:descendantFocusability="blocksDescendants"
-                 android:background="@drawable/l1_menu_panel"/>
+                 android:background="@drawable/l1_debug_card"/>
 
     <ViewStub
         android:id="@+id/youtube_overlay_stub"
