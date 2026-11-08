@@ -89,7 +89,7 @@ public class RadioListPreferenceDialogFragment extends LeanbackListPreferenceDia
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
             super.onBindViewHolder(holder, position);
-            if (!ViewUtil.isPlaybackQualityDialog(getParentFragment())) {
+            if (!ViewUtil.isL1StyledDialog(getParentFragment())) {
                 return;
             }
 
