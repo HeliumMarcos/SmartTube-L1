@@ -121,6 +121,11 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     }
 
     private void setupEventListeners() {
+        ((ExtendedHeadersSupportFragment) getHeadersSupportFragment()).setOnHeaderFocusedListener(() -> {
+            if (!isShowingHeaders()) {
+                startHeadersTransitionSafe(true);
+            }
+        });
         getHeadersSupportFragment().setOnHeaderClickedListener(
                 (viewHolder, row) -> {
                     long headerId = row.getHeaderItem().getId();
