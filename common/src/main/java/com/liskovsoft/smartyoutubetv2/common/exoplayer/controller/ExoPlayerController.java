@@ -77,6 +77,7 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
     private final Map<Format, Integer> mObservedAudioChannels = new HashMap<>();
     private final Set<String> mFailedAudioTracks = new HashSet<>();
     private int mAudioRecoveryAttempts;
+    private long mSourceOpenElapsedRealtimeMs;
 
     public ExoPlayerController(Context context, PlayerEventListener eventListener) {
         PlayerTweaksData playerTweaksData = PlayerTweaksData.instance(context);
@@ -196,6 +197,7 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
         mTrackSelectorManager.invalidate();
         mOnSourceChanged = true;
         mEventListener.onSourceChanged(getVideo());
+        mSourceOpenElapsedRealtimeMs = android.os.SystemClock.elapsedRealtime();
         mPlayer.prepare(mediaSource);
     }
 
@@ -407,6 +409,20 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
         // Manage audio focus. E.g. use Spotify when audio is disabled. (NOT NEEDED!!!)
         //MediaTrack audioTrack = mTrackSelectorManager.getAudioTrack();
         //ExoPlayerInitializer.enableAudioFocus(mPlayer, audioTrack != null && !audioTrack.isEmpty());
+    }
+
+    @Override
+    public void onRenderedFirstFrame(android.view.Surface surface) {
+        if (mSourceOpenElapsedRealtimeMs > 0) {
+            long elapsedMs = android.os.SystemClock.elapsedRealtime() - mSourceOpenElapsedRealtimeMs;
+            mSourceOpenElapsedRealtimeMs = 0;
+            Format selected = getSelectedSource(C.TRACK_TYPE_VIDEO);
+            int engineId = PlayerTweaksData.instance(mContext).getPlayerDataSource();
+            String video = selected == null ? "unknown" :
+                    selected.width + "x" + selected.height + "@" + selected.frameRate + "/" + selected.codecs;
+            Log.i(TAG, "NETWORK_COMPARE first_frame_ms=" + elapsedMs
+                    + " selected_engine=" + engineId + " video=" + video);
+        }
     }
 
     @Override
