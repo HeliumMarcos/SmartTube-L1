@@ -51,8 +51,7 @@ public class TrackSelectorUtil {
     public static CharSequence buildTrackNameShort(Format format) {
         String trackName;
         if (MimeTypes.isVideo(format.sampleMimeType)) {
-            trackName = joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(joinWithSeparator(buildResolutionShortString(format),
-                    buildFPSString(format)), buildBitrateString(format)), extractCodec(format)), buildHDRString(format)), buildHighBitrateMark(format));
+            trackName = buildReadableVideoTrackName(format);
         } else if (MimeTypes.isAudio(format.sampleMimeType)) {
             trackName = buildReadableAudioTrackName(format);
         } else if (MimeTypes.isText(format.sampleMimeType)) {
@@ -476,6 +475,64 @@ public class TrackSelectorUtil {
         }
         String shortCodec = extractCodec(format);
         return shortCodec == null || shortCodec.isEmpty() ? "Áudio" : shortCodec.toUpperCase(java.util.Locale.US);
+    }
+
+    /**
+     * Two-line video track label for TV navigation.
+     * Unknown metadata is omitted instead of guessing HDR, FPS or codec.
+     */
+    public static String buildReadableVideoTrackName(Format format) {
+        if (format == null) {
+            return "Vídeo";
+        }
+        String resolution = getResolutionLabel(format);
+        String title = resolution == null || resolution.isEmpty() ? "Resolução desconhecida" : resolution;
+        String codec = buildVideoCodecLabel(format);
+        String details = codec;
+        if (format.frameRate > 0) {
+            details = joinWithSeparator(details, Helpers.formatFloat(format.frameRate) + " fps");
+        }
+        if (format.colorInfo != null) {
+            if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084) {
+                details = joinWithSeparator(details, "HDR10/PQ");
+            } else if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG) {
+                details = joinWithSeparator(details, "HLG");
+            } else if (isHdrFormat(format)) {
+                details = joinWithSeparator(details, "HDR");
+            }
+        } else if (isHdrFormat(format)) {
+            details = joinWithSeparator(details, "HDR");
+        }
+        if (format.bitrate > 0) {
+            details = joinWithSeparator(details, Helpers.formatFloat(Helpers.round(format.bitrate / 1_000_000f, 2)) + " Mbps");
+        }
+        details = joinWithSeparator(details, buildHighBitrateMark(format));
+        return details.isEmpty() ? title : title + "\n" + details;
+    }
+
+    public static String buildVideoCodecLabel(Format format) {
+        if (format == null) {
+            return "";
+        }
+        String mime = format.sampleMimeType == null ? "" : format.sampleMimeType.toLowerCase(java.util.Locale.US);
+        String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
+        if (mime.contains("dolby-vision") || codec.startsWith("dvhe") || codec.startsWith("dvh1")) {
+            return "Dolby Vision";
+        }
+        if (mime.equals("video/av01") || codec.startsWith("av01")) {
+            return "AV1";
+        }
+        if (mime.equals("video/x-vnd.on2.vp9") || codec.startsWith("vp09") || codec.startsWith("vp9")) {
+            return "VP9";
+        }
+        if (mime.equals("video/hevc") || codec.startsWith("hvc1") || codec.startsWith("hev1")) {
+            return "HEVC (H.265)";
+        }
+        if (mime.equals("video/avc") || codec.startsWith("avc1") || codec.startsWith("avc3")) {
+            return "AVC (H.264)";
+        }
+        String shortCodec = extractCodec(format);
+        return shortCodec == null ? "" : shortCodec.toUpperCase(java.util.Locale.US);
     }
 
 
