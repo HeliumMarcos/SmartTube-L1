@@ -11,7 +11,7 @@ public final class VideoQualityCache {
     private static final long TTL_MS = 6L * 60 * 60 * 1000;
     private static final int MAX_ENTRIES = 400;
     private static final Map<String, QualityEntry> CACHE = new LinkedHashMap<String, QualityEntry>(64, .75f, true) {
-        @Override protected boolean removeEldestQualityEntry(Map.QualityEntry<String, QualityEntry> eldest) {
+        @Override protected boolean removeEldestEntry(Map.Entry<String, QualityEntry> eldest) {
             return size() > MAX_ENTRIES;
         }
     };
