@@ -335,7 +335,7 @@ public class AppDialogUtil {
         //        isPresetSelection && Helpers.equals(noVideo, selectedFormat)));
 
         result.add(0, UiOptionItem.from(
-                context.getString(R.string.option_disabled),
+                context.getString(R.string.video_preset_auto),
                 optionItem -> setFormat(playerData.getDefaultVideoFormat(), playerData, onFormatSelected),
                 !isPresetSelection));
 
