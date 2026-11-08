@@ -72,9 +72,6 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
     private LinearLayout column1;
     private LinearLayout column2;
     private LinearLayout sectionsContainer;
-    private LinearLayout leftSections;
-    private LinearLayout rightSections;
-    private int sectionCount;
     private UhdHelper mUhdHelper;
     private final List<Pair<String, String>> mVideoInfo = new ArrayList<>();
     private final List<Pair<String, String>> mDisplayModeId = new ArrayList<>();
@@ -107,12 +104,6 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         inflater.inflate(R.layout.debug_view, mDebugViewGroup, true);
         sectionsContainer = mDebugViewGroup.findViewById(R.id.l1_debug_sections);
-        leftSections = new LinearLayout(mContext);
-        rightSections = new LinearLayout(mContext);
-        leftSections.setOrientation(LinearLayout.VERTICAL);
-        rightSections.setOrientation(LinearLayout.VERTICAL);
-        sectionsContainer.addView(leftSections, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        sectionsContainer.addView(rightSections, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
     }
 
     public void show(boolean show) {
@@ -215,9 +206,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         if (!mStarted || sectionsContainer == null) {
             return;
         }
-        leftSections.removeAllViews();
-        rightSections.removeAllViews();
-        sectionCount = 0;
+        sectionsContainer.removeAllViews();
         updateRareChangedValues();
 
         appendSection("Resumo rápido");
@@ -260,7 +249,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         int spacing = Math.round(mContext.getResources().getDisplayMetrics().density * 3);
         cardParams.bottomMargin = spacing;
-        (sectionCount++ < 3 ? leftSections : rightSections).addView(card, cardParams);
+        sectionsContainer.addView(card, cardParams);
 
         TextView heading = createTextView(title);
         heading.setTextColor(Color.parseColor("#FFB7B2"));
