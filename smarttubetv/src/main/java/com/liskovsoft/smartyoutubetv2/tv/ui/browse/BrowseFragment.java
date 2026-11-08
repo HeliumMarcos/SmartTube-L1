@@ -60,6 +60,20 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     private boolean mFocusOnContent;
     private CrashRestorer mCrashRestorer;
     private LinearLayout mCompactNavigationRail;
+    private View mBrowseContentDock;
+
+    private void setCompactRailVisible(boolean visible) {
+        if (mCompactNavigationRail != null) {
+            mCompactNavigationRail.setVisibility(visible ? View.VISIBLE : View.GONE);
+        }
+        // Reserve actual layout space instead of drawing icons over video cards.
+        if (mBrowseContentDock != null) {
+            mBrowseContentDock.setPaddingRelative(visible ? navDp(72) : 0,
+                    mBrowseContentDock.getPaddingTop(),
+                    mBrowseContentDock.getPaddingEnd(),
+                    mBrowseContentDock.getPaddingBottom());
+        }
+    }
 
     private int navDp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
@@ -93,7 +107,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             icon.setPadding(navDp(15), navDp(13), navDp(15), navDp(13));
             mCompactNavigationRail.addView(icon, new LinearLayout.LayoutParams(navDp(60), navDp(56)));
         }
-        mCompactNavigationRail.setVisibility(isShowingHeaders() ? View.GONE : View.VISIBLE);
+        setCompactRailVisible(!isShowingHeaders());
     }
 
     @Override
@@ -134,6 +148,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         View root = super.onCreateView(inflater, container, savedInstanceState);
 
         mProgressBarManager.setRootView((ViewGroup) root);
+        mBrowseContentDock = root.findViewById(androidx.leanback.R.id.browse_container_dock);
         if (root instanceof FrameLayout) {
             mCompactNavigationRail = new LinearLayout(getContext());
             mCompactNavigationRail.setOrientation(LinearLayout.VERTICAL);
@@ -175,7 +190,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         setBrowseTransitionListener(new BrowseTransitionListener() {
             @Override
             public void onHeadersTransitionStart(boolean withHeaders) {
-                if (mCompactNavigationRail != null && withHeaders) mCompactNavigationRail.setVisibility(View.GONE);
+                if (withHeaders) setCompactRailVisible(false);
             }
             @Override
             public void onHeadersTransitionStop(boolean withHeaders) {
