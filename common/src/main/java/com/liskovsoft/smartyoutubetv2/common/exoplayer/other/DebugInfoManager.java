@@ -72,6 +72,9 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
     private LinearLayout column1;
     private LinearLayout column2;
     private LinearLayout sectionsContainer;
+    private LinearLayout leftSections;
+    private LinearLayout rightSections;
+    private int sectionCount;
     private UhdHelper mUhdHelper;
     private final List<Pair<String, String>> mVideoInfo = new ArrayList<>();
     private final List<Pair<String, String>> mDisplayModeId = new ArrayList<>();
@@ -91,7 +94,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         mDebugViewGroup = debugViewGroup;
         mPlayer = player;
         mPlayerInitializer = playerInitializer;
-        mTextSize = mContext.getResources().getDimension(R.dimen.debug_text_size);
+        mTextSize = mContext.getResources().getDimension(R.dimen.debug_text_size) * 0.78f;
         mAppVersion = String.format("%s version", mContext.getString(R.string.app_name));
         mVideoLabel = mContext.getString(R.string.settings_video);
         mAudioLabel = mContext.getString(R.string.playback_audio_label);
@@ -104,6 +107,12 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         LayoutInflater inflater = LayoutInflater.from(mContext);
         inflater.inflate(R.layout.debug_view, mDebugViewGroup, true);
         sectionsContainer = mDebugViewGroup.findViewById(R.id.l1_debug_sections);
+        leftSections = new LinearLayout(mContext);
+        rightSections = new LinearLayout(mContext);
+        leftSections.setOrientation(LinearLayout.VERTICAL);
+        rightSections.setOrientation(LinearLayout.VERTICAL);
+        sectionsContainer.addView(leftSections, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        sectionsContainer.addView(rightSections, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
     }
 
     public void show(boolean show) {
@@ -206,10 +215,9 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         if (!mStarted || sectionsContainer == null) {
             return;
         }
-        // Keep the current scroll position while the live technical values refresh.
-        android.widget.ScrollView scroll = mDebugViewGroup.findViewById(R.id.l1_debug_scroll);
-        int scrollY = scroll != null ? scroll.getScrollY() : 0;
-        sectionsContainer.removeAllViews();
+        leftSections.removeAllViews();
+        rightSections.removeAllViews();
+        sectionCount = 0;
         updateRareChangedValues();
 
         appendSection("Resumo rápido");
@@ -240,13 +248,6 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         appendPlayerVersion();
         appendAccountInfo();
 
-        if (scroll != null && scrollY > 0) {
-            scroll.post(() -> {
-                if (mStarted) {
-                    scroll.scrollTo(0, scrollY);
-                }
-            });
-        }
         mDebugViewGroup.removeCallbacks(this);
         mDebugViewGroup.postDelayed(this, REFRESH_INTERVAL_MS);
     }
@@ -257,9 +258,9 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         card.setBackgroundResource(R.drawable.l1_debug_card);
         LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        int spacing = Math.round(mContext.getResources().getDisplayMetrics().density * 7);
+        int spacing = Math.round(mContext.getResources().getDisplayMetrics().density * 3);
         cardParams.bottomMargin = spacing;
-        sectionsContainer.addView(card, cardParams);
+        (sectionCount++ < 3 ? leftSections : rightSections).addView(card, cardParams);
 
         TextView heading = createTextView(title);
         heading.setTextColor(Color.parseColor("#FFB7B2"));
