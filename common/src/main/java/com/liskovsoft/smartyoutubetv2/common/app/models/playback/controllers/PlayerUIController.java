@@ -212,6 +212,7 @@ public class PlayerUIController extends BasePlayerController {
                                 getPlayerData().setFormat(format);
                             },
                             getContext().getString(R.string.subtitles_disabled)));
+            settingsPresenter.setId(R.id.l1_subtitles_dialog);
             settingsPresenter.showDialog();
         }));
 
@@ -229,6 +230,7 @@ public class PlayerUIController extends BasePlayerController {
                                 getPlayerData().setFormat(format);
                             },
                             getContext().getString(R.string.subtitles_disabled)));
+            settingsPresenter.setId(R.id.l1_subtitles_dialog);
             settingsPresenter.showDialog();
         }));
 
@@ -243,6 +245,7 @@ public class PlayerUIController extends BasePlayerController {
         OptionCategory positionCategory = AppDialogUtil.createSubtitlePositionCategory(getContext());
         settingsPresenter.appendRadioCategory(positionCategory.title, positionCategory.options);
 
+        settingsPresenter.setId(R.id.l1_subtitles_dialog);
         settingsPresenter.showDialog(subtitlesOrigCategoryTitle, mSetSubtitleButtonState);
     }
 
