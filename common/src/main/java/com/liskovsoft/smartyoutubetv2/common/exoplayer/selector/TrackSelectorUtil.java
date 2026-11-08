@@ -487,27 +487,34 @@ public class TrackSelectorUtil {
         }
         String resolution = getResolutionLabel(format);
         String title = resolution == null || resolution.isEmpty() ? "Resolução desconhecida" : resolution;
-        String codec = buildVideoCodecLabel(format);
-        String details = codec;
+        String hdr = buildVideoHdrLabel(format);
+        if (!hdr.isEmpty()) {
+            title += " · " + hdr;
+        }
+        String details = buildVideoCodecLabel(format);
         if (format.frameRate > 0) {
             details = joinWithSeparator(details, Helpers.formatFloat(format.frameRate) + " fps");
-        }
-        if (format.colorInfo != null) {
-            if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084) {
-                details = joinWithSeparator(details, "HDR10/PQ");
-            } else if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG) {
-                details = joinWithSeparator(details, "HLG");
-            } else if (isHdrFormat(format)) {
-                details = joinWithSeparator(details, "HDR");
-            }
-        } else if (isHdrFormat(format)) {
-            details = joinWithSeparator(details, "HDR");
         }
         if (format.bitrate > 0) {
             details = joinWithSeparator(details, Helpers.formatFloat(Helpers.round(format.bitrate / 1_000_000f, 2)) + " Mbps");
         }
         details = joinWithSeparator(details, buildHighBitrateMark(format));
         return details.isEmpty() ? title : title + "\n" + details;
+    }
+
+    public static String buildVideoHdrLabel(Format format) {
+        if (format == null) {
+            return "";
+        }
+        if (format.colorInfo != null) {
+            if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084) {
+                return "HDR10/PQ";
+            }
+            if (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG) {
+                return "HLG";
+            }
+        }
+        return isHdrFormat(format) ? "HDR" : "";
     }
 
     public static String buildVideoCodecLabel(Format format) {
