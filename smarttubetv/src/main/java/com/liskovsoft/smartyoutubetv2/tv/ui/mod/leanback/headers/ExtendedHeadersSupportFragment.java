@@ -55,6 +55,12 @@ public class ExtendedHeadersSupportFragment extends HeadersSupportFragment {
                     });
 
                     // NEW CODE
+                    headerView.setOnFocusChangeListener((v, hasFocus) -> {
+                        if (hasFocus && mOnHeaderFocusedListener != null) {
+                            mOnHeaderFocusedListener.run();
+                        }
+                    });
+
                     headerView.setOnLongClickListener(v -> {
                         if (mOnHeaderLongPressedListener != null) {
                             mOnHeaderLongPressedListener.onHeaderLongPressed(
