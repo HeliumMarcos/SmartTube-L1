@@ -75,7 +75,7 @@ public class VideoCardPresenter extends LongClickPresenter {
             }
         };
 
-        cardView.setTitleLinesNum(isCardMultilineTitleEnabled ? 2 : 1);
+        cardView.setTitleLinesNum(2); // TV-style titles below thumbnails
         cardView.setContentLinesNum(isCardMultilineSubtitleEnabled ? 2 : 1);
         cardView.enableTextAutoScroll(isCardTextAutoScrollEnabled);
         cardView.setTextScrollSpeed(cardTextScrollSpeed);
