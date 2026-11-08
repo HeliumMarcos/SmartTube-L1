@@ -73,7 +73,10 @@ public class VideoCardPresenter extends LongClickPresenter {
                 updateCardBackgroundColor(this, selected);
                 super.setSelected(selected);
                 if (android.os.Build.VERSION.SDK_INT >= 23) {
-                    setForeground(selected ? ContextCompat.getDrawable(getContext(), R.drawable.lb_card_outline) : null);
+                    View thumbnail = findViewById(R.id.main_image_wrapper);
+                    if (thumbnail != null) {
+                        thumbnail.setForeground(selected ? ContextCompat.getDrawable(getContext(), R.drawable.lb_card_outline) : null);
+                    }
                 }
             }
         };
@@ -87,7 +90,7 @@ public class VideoCardPresenter extends LongClickPresenter {
         cardView.enableBadge(isBadgeEnabled());
         cardView.enableTitle(isTitleEnabled());
         cardView.enableContent(isContentEnabled());
-        cardView.setBackgroundColor(mDefaultBackgroundColor); // background is temporarily visible during animations
+        cardView.setBackgroundColor(android.graphics.Color.TRANSPARENT); // Separate thumbnail and metadata visually
         //if (VERSION.SDK_INT >= 23 && MainUIData.instance(context).isUiTweakEnabled(MainUIData.UI_TWEAK_ROUNDED_CORNERS)) {
         //    cardView.setForeground(ContextCompat.getDrawable(context, R.drawable.lb_card_outline));
         //}
@@ -96,8 +99,8 @@ public class VideoCardPresenter extends LongClickPresenter {
     }
 
     private void updateCardBackgroundColor(ComplexImageCardView view, boolean selected) {
-        int backgroundColor = selected ? mSelectedBackgroundColor : mDefaultBackgroundColor;
-        int textColor = selected ? mSelectedTextColor : mDefaultTextColor;
+        int backgroundColor = android.graphics.Color.TRANSPARENT; // No solid info card behind metadata
+        int textColor = mDefaultTextColor; // Keep metadata readable on both focus states
 
         // Both background colors should be set because the view's
         // background is temporarily visible during animations.
