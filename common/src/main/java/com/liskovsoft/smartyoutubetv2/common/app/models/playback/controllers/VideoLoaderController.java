@@ -5,6 +5,7 @@ import android.os.Build.VERSION;
 import com.liskovsoft.mediaserviceinterfaces.MediaItemService;
 import com.liskovsoft.mediaserviceinterfaces.ServiceManager;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaFormat;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoQualityCache;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemMetadata;
 import com.liskovsoft.sharedutils.helpers.Helpers;
@@ -274,6 +275,7 @@ public class VideoLoaderController extends BasePlayerController {
 
         String bgImageUrl = null;
 
+        VideoQualityCache.put(getVideo().videoId, formatInfo);
         getVideo().sync(formatInfo);
 
         // Fix stretched video for a couple milliseconds (before the onVideoSizeChanged gets called)
