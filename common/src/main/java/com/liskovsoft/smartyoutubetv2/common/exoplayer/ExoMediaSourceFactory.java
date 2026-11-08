@@ -135,6 +135,22 @@ public class ExoMediaSourceFactory {
         PlayerTweaksData tweaksData = PlayerTweaksData.instance(mContext);
         int source = tweaksData.getPlayerDataSource();
         DefaultBandwidthMeter bandwidthMeter = useBandwidthMeter ? BANDWIDTH_METER : null;
+        if (source == PlayerTweaksData.PLAYER_DATA_SOURCE_HTTP_ENGINE && android.os.Build.VERSION.SDK_INT >= 34) {
+            try {
+                HttpDataSource.Factory factory = HttpEnginePlayback.createFactory(
+                        mContext, USER_AGENT, (int) OkHttpManager.getConnectTimeoutMs(),
+                        readTimeoutMs, bandwidthMeter);
+                addCommonHeaders(factory);
+                Log.d(TAG, "Playback network route: Android HttpEngine");
+                return factory;
+            } catch (RuntimeException | LinkageError error) {
+                Log.e(TAG, "HttpEngine could not start, falling back to Cronet: " + error);
+            }
+        }
+        // Also handle a persisted HttpEngine choice on devices below Android 14.
+        if (source == PlayerTweaksData.PLAYER_DATA_SOURCE_HTTP_ENGINE) {
+            source = PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET;
+        }
         return source == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP ? buildOkHttpDataSourceFactory(bandwidthMeter, readTimeoutMs) :
                         source == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET && CronetManager.getEngine(mContext) != null ? buildCronetDataSourceFactory(bandwidthMeter, readTimeoutMs) :
                                 buildDefaultHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
