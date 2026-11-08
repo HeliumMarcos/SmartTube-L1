@@ -243,6 +243,11 @@ public class ViewUtil {
         }
     }
 
+    /** Preserve the existing HQ styling call sites during incremental migration. */
+    public static void stylePlaybackQualityDialog(Fragment parent, View view) {
+        styleL1Dialog(parent, view);
+    }
+
     public static void enableTransparentDialog(Context context, View rootView) {
         if (context == null || rootView == null || VERSION.SDK_INT <= 19) {
             return;
