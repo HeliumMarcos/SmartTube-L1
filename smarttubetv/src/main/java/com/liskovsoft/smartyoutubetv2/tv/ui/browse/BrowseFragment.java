@@ -6,6 +6,10 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Gravity;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -54,6 +58,34 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     private boolean mIsFragmentCreated;
     private boolean mFocusOnContent;
     private CrashRestorer mCrashRestorer;
+    private LinearLayout mCompactNavigationRail;
+
+    private int navDp(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    /** A non-focusable icon rail; the existing Leanback headers own D-pad navigation. */
+    private void refreshCompactNavigationRail() {
+        if (mCompactNavigationRail == null || getContext() == null) return;
+        mCompactNavigationRail.removeAllViews();
+        for (int i = 0; i < mSectionRowAdapter.size(); i++) {
+            Object item = mSectionRowAdapter.get(i);
+            if (!(item instanceof PageRow)) continue;
+            HeaderItem header = ((PageRow) item).getHeaderItem();
+            if (!(header instanceof SectionHeaderItem)) continue;
+            int iconId = ((SectionHeaderItem) header).getResId();
+            if (iconId == 0) continue;
+            ImageView icon = new ImageView(getContext());
+            icon.setImageResource(iconId);
+            icon.setAlpha(i == getSelectedPosition() ? 1f : 0.68f);
+            icon.setFocusable(false);
+            icon.setClickable(false);
+            icon.setContentDescription(header.getName());
+            icon.setPadding(navDp(15), navDp(13), navDp(15), navDp(13));
+            mCompactNavigationRail.addView(icon, new LinearLayout.LayoutParams(navDp(60), navDp(56)));
+        }
+        mCompactNavigationRail.setVisibility(isShowingHeaders() ? View.GONE : View.VISIBLE);
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -93,6 +125,16 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         View root = super.onCreateView(inflater, container, savedInstanceState);
 
         mProgressBarManager.setRootView((ViewGroup) root);
+        if (root instanceof FrameLayout) {
+            mCompactNavigationRail = new LinearLayout(getContext());
+            mCompactNavigationRail.setOrientation(LinearLayout.VERTICAL);
+            mCompactNavigationRail.setFocusable(false);
+            mCompactNavigationRail.setClickable(false);
+            mCompactNavigationRail.setBackgroundColor(0xD91B2432);
+            FrameLayout.LayoutParams railParams = new FrameLayout.LayoutParams(navDp(60), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL);
+            ((FrameLayout) root).addView(mCompactNavigationRail, railParams);
+            refreshCompactNavigationRail();
+        }
 
         return root;
     }
@@ -121,6 +163,16 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     }
 
     private void setupEventListeners() {
+        setBrowseTransitionListener(new BrowseTransitionListener() {
+            @Override
+            public void onHeadersTransitionStart(boolean withHeaders) {
+                if (mCompactNavigationRail != null && withHeaders) mCompactNavigationRail.setVisibility(View.GONE);
+            }
+            @Override
+            public void onHeadersTransitionStop(boolean withHeaders) {
+                refreshCompactNavigationRail();
+            }
+        });
         ((ExtendedHeadersSupportFragment) getHeadersSupportFragment()).setOnHeaderFocusedListener(() -> {
             if (!isShowingHeaders()) {
                 startHeadersTransitionSafe(true);
@@ -291,6 +343,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
         mSections.put(section.getId(), section);
         createHeader(index, section);
+        refreshCompactNavigationRail();
     }
 
     @Override
@@ -301,12 +354,14 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
         mSections.remove(section.getId());
         removeHeader(section);
+        refreshCompactNavigationRail();
     }
 
     @Override
     public void removeAllSections() {
         mSections.clear();
         mSectionRowAdapter.clear();
+        refreshCompactNavigationRail();
     }
 
     @Override
