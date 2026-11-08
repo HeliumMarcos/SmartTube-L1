@@ -435,6 +435,11 @@ public class DefaultHttpDataSource extends BaseDataSource implements HttpDataSou
   /**
    * Establishes a connection, following redirects to do so where permitted.
    */
+  /** Allows alternate HTTP transports without changing the HTTP data source semantics. */
+  protected HttpURLConnection openConnection(URL url) throws IOException {
+    return (HttpURLConnection) url.openConnection();
+  }
+
   private HttpURLConnection makeConnection(DataSpec dataSpec) throws IOException {
     URL url = new URL(dataSpec.uri.toString());
     @HttpMethod int httpMethod = dataSpec.httpMethod;
