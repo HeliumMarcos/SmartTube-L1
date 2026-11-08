@@ -72,7 +72,7 @@ public class CommentsPreferenceDialogFragment extends LeanbackPreferenceDialogFr
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        final View view = inflater.inflate(R.layout.chat_preference_fragment, container,
+        final View view = inflater.inflate(R.layout.l1_comments_fragment, container,
                 false);
 
         final CharSequence title = mDialogTitle;
