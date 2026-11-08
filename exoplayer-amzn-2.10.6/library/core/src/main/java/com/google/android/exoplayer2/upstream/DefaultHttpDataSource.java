@@ -435,6 +435,11 @@ public class DefaultHttpDataSource extends BaseDataSource implements HttpDataSou
   /**
    * Establishes a connection, following redirects to do so where permitted.
    */
+  /** Allows alternate HTTP transports without changing the HTTP data source semantics. */
+  protected HttpURLConnection openConnection(URL url) throws IOException {
+    return (HttpURLConnection) url.openConnection();
+  }
+
   private HttpURLConnection makeConnection(DataSpec dataSpec) throws IOException {
     URL url = new URL(dataSpec.uri.toString());
     @HttpMethod int httpMethod = dataSpec.httpMethod;
@@ -525,7 +530,7 @@ public class DefaultHttpDataSource extends BaseDataSource implements HttpDataSou
       throws IOException {
     // MOD: Add modern TLS ciphers to HttpUrlConnection and custom Dns
     // https://stackoverflow.com/questions/16299531/how-to-override-the-cipherlist-sent-to-the-server-by-android-when-using-httpsurl
-    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+    HttpURLConnection connection = openConnection(url);
     // TODO: Exceptions on API 34 (maybe lowers too). Enable for old api or at least switch to Cronet on error
     //HttpURLConnection connection = NetworkHelpers.getHttpsURLConnection(url);
     connection.setConnectTimeout(connectTimeoutMillis);
