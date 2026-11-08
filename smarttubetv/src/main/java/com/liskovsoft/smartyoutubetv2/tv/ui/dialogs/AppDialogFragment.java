@@ -223,7 +223,8 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
     @Override
     public void startPreferenceFragment(@NonNull Fragment fragment) {
         View root = getView();
-        if (root != null && (mId == R.id.playback_quality_dialog || mId == R.id.l1_speed_dialog)) {
+        if (root != null && (mId == R.id.playback_quality_dialog || mId == R.id.l1_speed_dialog
+                || mId == R.id.l1_subtitles_dialog || mId == R.id.l1_playlist_dialog)) {
             View panel = root.findViewById(R.id.settings_preference_fragment_container);
             if (panel != null && panel.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                 ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) panel.getLayoutParams();
@@ -337,7 +338,7 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
                 ViewUtil.enableTransparentDialog(getActivity(), view);
             }
 
-            ViewUtil.stylePlaybackQualityDialog(getParentFragment(), view);
+            ViewUtil.styleL1Dialog(getParentFragment(), view);
             return view;
         }
 
@@ -355,7 +356,7 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
                 for (OptionCategory category : mCategories) {
                     if (category.options != null) {
                         Preference preference = mManager.createPreference(category);
-                        if (ViewUtil.isPlaybackQualityDialog(getParentFragment()) && preference instanceof DialogPreference) {
+                        if (ViewUtil.isL1StyledDialog(getParentFragment()) && preference instanceof DialogPreference) {
                             preference.setLayoutResource(R.layout.playback_quality_category);
                         }
                         screen.addPreference(preference);
