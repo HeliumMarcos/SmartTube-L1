@@ -244,6 +244,9 @@ public class LeanbackListPreferenceDialogFragment extends LeanbackPreferenceDial
             final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             final View view = inflater.inflate(androidx.leanback.preference.R.layout.leanback_list_preference_item_single,
                     parent, false);
+            if (ViewUtil.isL1StyledDialog(getParentFragment())) {
+                ViewUtil.styleL1SelectionRow(view);
+            }
             return new ViewHolder(view, this);
         }
 
@@ -299,6 +302,9 @@ public class LeanbackListPreferenceDialogFragment extends LeanbackPreferenceDial
             final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
             final View view = inflater.inflate(androidx.leanback.preference.R.layout.leanback_list_preference_item_multi, parent,
                     false);
+            if (ViewUtil.isL1StyledDialog(getParentFragment())) {
+                ViewUtil.styleL1SelectionRow(view);
+            }
             return new ViewHolder(view, this);
         }
 
