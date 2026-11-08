@@ -28,6 +28,11 @@ import com.bumptech.glide.request.target.Target;
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.app.models.data.Video;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoQualityCache;
+import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoQualityProbe;
+import android.os.Handler;
+import android.os.Looper;
+import java.util.WeakHashMap;
 import com.liskovsoft.smartyoutubetv2.common.prefs.MainUIData;
 import com.liskovsoft.smartyoutubetv2.common.utils.ClickbaitRemover;
 import com.liskovsoft.smartyoutubetv2.tv.R;
@@ -48,6 +53,8 @@ public class VideoCardPresenter extends LongClickPresenter {
     private int mSelectedBackgroundColor = -1;
     private int mSelectedTextColor = -1;
     private int mCardPreviewType;
+    private final WeakHashMap<ComplexImageCardView, String> mBoundVideos = new WeakHashMap<>();
+    private final Handler mMainHandler = new Handler(Looper.getMainLooper());
     private int mThumbQuality;
     private int mWidth;
     private int mHeight;
@@ -140,7 +147,20 @@ public class VideoCardPresenter extends LongClickPresenter {
         Context context = cardView.getContext();
 
         cardView.setTitleText(video.getTitle());
-        cardView.setContentText(formatQualityMetadata(video.getSecondTitle()));
+        mBoundVideos.put(cardView, video.videoId);
+        Integer cachedQuality = VideoQualityCache.get(video.videoId);
+        cardView.setContentText(qualitySubtitle(video.getSecondTitle(), cachedQuality));
+        if (cachedQuality == null && video.videoId != null && !video.isLive && !video.isUpcoming) {
+            final String boundId = video.videoId;
+            final java.lang.ref.WeakReference<ComplexImageCardView> weakCard = new java.lang.ref.WeakReference<>(cardView);
+            final CharSequence subtitle = video.getSecondTitle();
+            VideoQualityProbe.request(boundId, (id, tier) -> mMainHandler.post(() -> {
+                ComplexImageCardView current = weakCard.get();
+                if (current != null && boundId.equals(mBoundVideos.get(current))) {
+                    current.setContentText(qualitySubtitle(subtitle, tier));
+                }
+            }));
+        }
         // Count progress that very close to zero. E.g. when user closed video immediately.
         cardView.setProgress(video.percentWatched > 0 && video.percentWatched < 1 ? 1 : Math.round(video.percentWatched));
         cardView.setBadgeText(
@@ -187,6 +207,17 @@ public class VideoCardPresenter extends LongClickPresenter {
                 .into(cardView.getMainImageView());
     }
 
+    private CharSequence qualitySubtitle(CharSequence subtitle, Integer tier) {
+        if (tier == null || tier < 4) return subtitle;
+        String prefix = tier >= 8 ? "8K  " : "4K  ";
+        CharSequence original = subtitle == null ? "" : subtitle;
+        SpannableStringBuilder styled = new SpannableStringBuilder(prefix).append(original);
+        styled.setSpan(new BackgroundColorSpan(0xFF555B67), 0, 2, 0);
+        styled.setSpan(new ForegroundColorSpan(Color.WHITE), 0, 2, 0);
+        styled.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), 0, 2, 0);
+        return styled;
+    }
+
     /** Highlight only quality metadata actually provided by the video service. */
     private CharSequence formatQualityMetadata(CharSequence subtitle) {
         if (subtitle == null) return null;
@@ -206,6 +237,7 @@ public class VideoCardPresenter extends LongClickPresenter {
         super.onUnbindViewHolder(viewHolder);
 
         ComplexImageCardView cardView = (ComplexImageCardView) viewHolder.view;
+        mBoundVideos.remove(cardView);
 
         // Remove references to images so that the garbage collector can free up memory.
         cardView.setBadgeImage(null);
