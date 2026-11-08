@@ -1,4 +1,5 @@
 name: Helium ARMv7 APK (manual)
+# Rebuild UI-modernization branch with restored Android HttpEngine network transport.
 
 on:
   workflow_dispatch:
