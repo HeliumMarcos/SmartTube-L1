@@ -61,6 +61,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
     private CrashRestorer mCrashRestorer;
     private LinearLayout mCompactNavigationRail;
     private View mBrowseContentDock;
+    private int mOriginalContentPaddingStart;
 
     private void setCompactRailVisible(boolean visible) {
         if (mCompactNavigationRail != null) {
@@ -68,7 +69,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         }
         // Reserve actual layout space instead of drawing icons over video cards.
         if (mBrowseContentDock != null) {
-            mBrowseContentDock.setPaddingRelative(visible ? navDp(72) : 0,
+            mBrowseContentDock.setPaddingRelative(mOriginalContentPaddingStart + (visible ? navDp(72) : 0),
                     mBrowseContentDock.getPaddingTop(),
                     mBrowseContentDock.getPaddingEnd(),
                     mBrowseContentDock.getPaddingBottom());
@@ -149,6 +150,9 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
         mProgressBarManager.setRootView((ViewGroup) root);
         mBrowseContentDock = root.findViewById(androidx.leanback.R.id.browse_container_dock);
+        if (mBrowseContentDock != null) {
+            mOriginalContentPaddingStart = mBrowseContentDock.getPaddingStart();
+        }
         if (root instanceof FrameLayout) {
             mCompactNavigationRail = new LinearLayout(getContext());
             mCompactNavigationRail.setOrientation(LinearLayout.VERTICAL);
@@ -526,6 +530,8 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
     @Override
     public void onDestroyView() {
+        mCompactNavigationRail = null;
+        mBrowseContentDock = null;
         mSectionFragmentFactory.cleanup();
 
         super.onDestroyView();
