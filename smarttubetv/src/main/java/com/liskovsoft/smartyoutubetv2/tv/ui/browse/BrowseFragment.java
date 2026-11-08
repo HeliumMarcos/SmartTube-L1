@@ -1,6 +1,5 @@
 package com.liskovsoft.smartyoutubetv2.tv.ui.browse;
 
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -29,7 +28,6 @@ import com.liskovsoft.smartyoutubetv2.common.app.models.data.VideoGroup;
 import com.liskovsoft.smartyoutubetv2.common.app.models.errors.ErrorFragmentData;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.BrowsePresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.presenters.SearchPresenter;
-import com.liskovsoft.smartyoutubetv2.common.app.presenters.SplashPresenter;
 import com.liskovsoft.smartyoutubetv2.common.app.views.BrowseView;
 import com.liskovsoft.smartyoutubetv2.common.misc.CrashRestorer;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
@@ -509,21 +507,6 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
 
     @Override
     public void updateBadge() {
-        if (getContext() == null) {
-            return;
-        }
-
-        SplashPresenter splashPresenter = SplashPresenter.instance(getContext());
-
-        if (splashPresenter == null) {
-            return;
-        }
-
-        int appLogoRes = Helpers.getThemeAttr(getContext(), R.attr.appLogo);
-
-        Drawable bridgeIcon = Utils.getDrawable(getContext(), splashPresenter.getBridgePackageName(), "app_icon");
-
-        // Top right corner logo
-        setBadgeDrawable(bridgeIcon != null ? bridgeIcon : appLogoRes > 0 ? ContextCompat.getDrawable(getContext(), appLogoRes) : null);
+        setBadgeDrawable(null);
     }
 }

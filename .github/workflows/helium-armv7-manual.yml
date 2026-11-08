@@ -130,13 +130,13 @@ jobs:
           cp "$APK_PATH" SmartTube-L1-ARMv7.apk
           jq -n --arg url "$apk_url" --arg version "$VERSION_NAME · build ${GITHUB_RUN_NUMBER}" \
             --argjson code "$VERSION_CODE" \
-            '{package: {downloadUrl: $url}, ($version): {versionCode: $code, changelog: ["SmartTube-L1 ARMv7 update"], changelog_pt: ["Atualização do SmartTube-L1 para ARMv7"]}}' \
+            '{package: {downloadUrl: $url}, ($version): {versionCode: $code, changelog: ["L1-Tube ARMv7 update"], changelog_pt: ["Atualização do L1-Tube para ARMv7"]}}' \
             > smarttube-l1-update.json
 
           gh release create "$tag" SmartTube-L1-ARMv7.apk smarttube-l1-update.json \
             --repo "$GITHUB_REPOSITORY" \
             --target "$(git rev-parse HEAD)" \
-            --title "SmartTube-L1 ARMv7 · build ${GITHUB_RUN_NUMBER}" \
-            --notes "Signed SmartTube-L1 APK for Android TV (armeabi-v7a). This release also supplies the app's update manifest." \
+            --title "L1-Tube ARMv7 · build ${GITHUB_RUN_NUMBER}" \
+            --notes "Signed L1-Tube APK for Android TV (armeabi-v7a). This release also supplies the app's update manifest." \
             --latest
           echo "Direct APK: $apk_url" >> "$GITHUB_STEP_SUMMARY"

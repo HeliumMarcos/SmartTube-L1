@@ -468,7 +468,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
 
         initializePlayerRows();
 
-        initializeGlobalClock();
+        updatePlaybackClock(isControlsOverlayVisible());
 
         initializeGlobalEndingTime();
 
@@ -531,14 +531,17 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
         }
     }
 
-    private void initializeGlobalClock() {
+    private void updatePlaybackClock(boolean controlsVisible) {
         if (getView() == null) {
             return;
         }
 
         DateTimeView clock = getView().findViewById(R.id.global_time);
-        clock.showDate(false);
-        clock.setVisibility(getPlayerData().isGlobalClockEnabled() ? View.VISIBLE : View.GONE);
+        PlayerData playerData = getPlayerData();
+        boolean showDate = controlsVisible && playerData.isClockEnabled();
+        clock.showDate(showDate);
+        clock.setVisibility(showDate || playerData.isGlobalClockEnabled() ? View.VISIBLE : View.GONE);
+        clock.onTickle();
     }
 
     private void initializeGlobalEndingTime() {
@@ -1220,6 +1223,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     @Override
     public void showControlsOverlay(boolean runAnimation) {
         super.showControlsOverlay(mIsUIAnimationsEnabled);
+        updatePlaybackClock(true);
 
         // Do throttle. Called so many times. Rely on boxing because initial state is unknown.
         if (mIsControlsShownPreviously != null && mIsControlsShownPreviously) {
@@ -1242,6 +1246,7 @@ public class PlaybackFragment extends SeekModePlaybackFragment implements Playba
     @Override
     public void hideControlsOverlay(boolean runAnimation) {
         super.hideControlsOverlay(mIsUIAnimationsEnabled);
+        updatePlaybackClock(false);
 
         // Do throttle. Called so many times. Rely on boxing because initial state is unknown.
         if (mIsControlsShownPreviously != null && !mIsControlsShownPreviously) {

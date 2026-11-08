@@ -15,6 +15,7 @@ import java.util.Map;
 public class GeneralData implements ProfileChangeListener {
     public static final int SCREENSAVER_TIMEOUT_NEVER = 0;
     private static final String GENERAL_DATA = "general_data";
+    private static final String CLOCK_24_HOUR_DEFAULT_APPLIED = "l1_clock_24_hour_default_applied";
     public static final int EXIT_NONE = 0;
     public static final int EXIT_DOUBLE_BACK = 1;
     public static final int EXIT_SINGLE_BACK = 2;
@@ -90,6 +91,10 @@ public class GeneralData implements ProfileChangeListener {
 
     private GeneralData(Context context) {
         mPrefs = AppPrefs.instance(context);
+        if (!mPrefs.getBoolean(CLOCK_24_HOUR_DEFAULT_APPLIED, false)) {
+            GlobalPreferences.instance(context).set24HourLocaleEnabled(true);
+            mPrefs.putBoolean(CLOCK_24_HOUR_DEFAULT_APPLIED, true);
+        }
         mPrefs.addListener(this);
         restoreState();
     }

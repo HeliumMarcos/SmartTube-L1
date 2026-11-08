@@ -1,6 +1,6 @@
-# SmartTube-L1 · Lista lateral
+# L1-Tube · Lista lateral
 
-Padrão visual aprovado para a evolução do SmartTube-L1 em Android TV. O menu HQ durante a reprodução é a primeira aplicação. Use a mesma linguagem visual em configurações, diálogos, seletores, listas e painéis de informação. Cada tela conserva a navegação adequada à sua função.
+Padrão visual aprovado para a evolução do L1-Tube em Android TV. O menu HQ durante a reprodução é a primeira aplicação. Use a mesma linguagem visual em configurações, diálogos, seletores, listas e painéis de informação. Cada tela conserva a navegação adequada à sua função.
 
 ## Paleta
 
@@ -18,9 +18,9 @@ Os recursos ficam em `smarttubetv/src/main/res/values/l1_theme.xml`. Reutilize o
 
 ## Identidade no launcher
 
-- O nome exibido é **SmartTube-L1**.
-- A marca é um triângulo de reprodução azul em relevo com o monograma **L1** branco dentro dele. Centralize a marca na área segura do ícone adaptativo para os recortes do launcher.
-- O banner da TV usa a mesma marca sobre a superfície escura do tema e o sufixo **-L1** em azul.
+- O nome exibido é **L1-Tube**.
+- A marca é um triângulo de reprodução azul em relevo com o monograma **L1** branco dentro dele. Deixe margem ao redor de todo o triângulo, inclusive nos vértices do lado esquerdo, para o recorte circular do launcher.
+- O banner da TV usa a mesma marca sobre a superfície escura do tema e o prefixo **L1** em azul.
 
 ## Forma e tipografia
 
@@ -28,7 +28,8 @@ Os recursos ficam em `smarttubetv/src/main/res/values/l1_theme.xml`. Reutilize o
 - Use uma escala de 4, 8, 16 e 24 dp. O menu HQ usa 4 dp entre linhas, 8 dp de margem interna no painel e 16 dp nas laterais da linha. As categorias têm pelo menos 48 dp de altura e crescem quando o texto precisa quebrar.
 - Use a fonte nativa sem serifa. O cabeçalho identifica a tela, os títulos das opções usam peso médio e os detalhes ficam abaixo em cor secundária. Mantenha o texto legível com a fonte ampliada do Android.
 - A lista de vídeo mantém resolução e HDR juntos, como **(4K) 2160p • HDR10/PQ**, com **AV1 · 24 fps · 26,2 Mbps** abaixo. A lista de áudio usa o nome completo, como **Dolby Digital Plus**, com **5.1 surround · 384 kbps** abaixo quando esses dados estiverem disponíveis.
-- O painel durante a reprodução é outra superfície. Para a futura atualização dele, use duas linhas com rótulos de **Vídeo** e **Áudio** e os dados das faixas ativas. Use abreviações legíveis, como **DD+**, nesse espaço compacto.
+- O cabeçalho da tela inicial reserva o canto superior direito à data e à hora em 24 horas.
+- No player, a data e a hora aparecem no canto superior esquerdo. O bloco no lado direito, abaixo da barra de progresso, mostra os dados das faixas ativas em linhas de **Vídeo** e **Áudio**. Use abreviações legíveis, como **DD+**, nesse espaço compacto.
 
 ## Controle remoto e estados
 

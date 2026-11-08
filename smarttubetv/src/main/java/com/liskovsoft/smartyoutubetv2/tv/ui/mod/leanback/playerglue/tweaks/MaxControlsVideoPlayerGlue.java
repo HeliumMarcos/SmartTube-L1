@@ -96,7 +96,6 @@ public abstract class MaxControlsVideoPlayerGlue<T extends PlayerAdapter>
 
                 viewHolder.setTopEdgeFocusListener(MaxControlsVideoPlayerGlue.this);
                 viewHolder.setQualityInfo(mQualityInfo);
-                viewHolder.setDateVisibility(isControlsVisible());
                 // Don't uncomment
                 // Reset to defaults
                 //viewHolder.setSeekPreviewTitle(null);
@@ -111,15 +110,6 @@ public abstract class MaxControlsVideoPlayerGlue<T extends PlayerAdapter>
         };
         rowPresenter.setDescriptionPresenter(detailsPresenter);
         return rowPresenter;
-    }
-
-    @Override
-    public void setControlsVisibility(boolean show) {
-        super.setControlsVisibility(show);
-
-        if (getTransportViewHolder() != null) {
-            getTransportViewHolder().setDateVisibility(show);
-        }
     }
 
     @Override
