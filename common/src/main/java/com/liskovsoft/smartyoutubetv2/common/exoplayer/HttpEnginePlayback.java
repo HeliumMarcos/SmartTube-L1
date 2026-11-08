@@ -30,7 +30,8 @@ final class HttpEnginePlayback {
         if (sEngine == null) {
             sEngine = new HttpEngine.Builder(context.getApplicationContext())
                     .setEnableHttp2(true)
-                    .setEnableQuic(true)
+                    // The TCL transfer test favored HTTP/2 with QUIC disabled.
+                    .setEnableQuic(false)
                     .setEnableBrotli(true)
                     .build();
         }

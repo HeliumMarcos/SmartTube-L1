@@ -36,7 +36,6 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.google.android.exoplayer2.util.Util;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
-import com.liskovsoft.sharedutils.cronet.CronetManager;
 import com.liskovsoft.sharedutils.helpers.FileHelpers;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.sharedutils.okhttp.OkHttpManager;
@@ -53,6 +52,9 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.chromium.net.CronetEngine;
+import org.chromium.net.impl.NativeCronetProvider;
+
 import okhttp3.OkHttpClient;
 
 public class ExoMediaSourceFactory {
@@ -64,6 +66,7 @@ public class ExoMediaSourceFactory {
     private static final String USER_AGENT = DefaultHeaders.APP_USER_AGENT;
     @SuppressLint("StaticFieldLeak")
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
+    private static CronetEngine sPlaybackCronet;
     private final Context mContext;
     private static final Uri DASH_MANIFEST_URI = Uri.parse("https://example.com/test.mpd");
     private static final String DASH_MANIFEST_EXTENSION = "mpd";
@@ -141,7 +144,7 @@ public class ExoMediaSourceFactory {
                         mContext, USER_AGENT, (int) OkHttpManager.getConnectTimeoutMs(),
                         readTimeoutMs, bandwidthMeter);
                 addCommonHeaders(factory);
-                Log.d(TAG, "Playback network route: Android HttpEngine");
+                Log.d(TAG, "Playback network route: Android HttpEngine (HTTP/2 on, QUIC off, Brotli on)");
                 return factory;
             } catch (RuntimeException | LinkageError error) {
                 Log.e(TAG, "HttpEngine could not start, falling back to Cronet: " + error);
@@ -151,9 +154,38 @@ public class ExoMediaSourceFactory {
         if (source == PlayerTweaksData.PLAYER_DATA_SOURCE_HTTP_ENGINE) {
             source = PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET;
         }
-        return source == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP ? buildOkHttpDataSourceFactory(bandwidthMeter, readTimeoutMs) :
-                        source == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET && CronetManager.getEngine(mContext) != null ? buildCronetDataSourceFactory(bandwidthMeter, readTimeoutMs) :
-                                buildDefaultHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
+        if (source == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP) {
+            return buildOkHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
+        }
+        if (source == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET) {
+            CronetEngine cronet = getPlaybackCronetEngine(mContext);
+            if (cronet != null) {
+                Log.d(TAG, "Playback network route: Cronet (HTTP/2 on, QUIC off, Brotli off)");
+                return buildCronetDataSourceFactory(cronet, bandwidthMeter, readTimeoutMs);
+            }
+        }
+        return buildDefaultHttpDataSourceFactory(bandwidthMeter, readTimeoutMs);
+    }
+
+    public static boolean isPlaybackCronetAvailable(Context context) {
+        return getPlaybackCronetEngine(context) != null;
+    }
+
+    private static synchronized CronetEngine getPlaybackCronetEngine(Context context) {
+        if (sPlaybackCronet == null) {
+            try {
+                // Keep the playback profile separate from the engine used by the YouTube API.
+                sPlaybackCronet = new NativeCronetProvider(context.getApplicationContext()).createBuilder()
+                        .enableHttp2(true)
+                        .enableQuic(false)
+                        .enableBrotli(false)
+                        .build();
+                Log.d(TAG, "Playback Cronet initialized: " + sPlaybackCronet.getVersionString());
+            } catch (RuntimeException | LinkageError error) {
+                Log.e(TAG, "Playback Cronet could not start: " + error);
+            }
+        }
+        return sPlaybackCronet;
     }
 
     @SuppressWarnings("deprecation")
@@ -310,10 +342,11 @@ public class ExoMediaSourceFactory {
         return dataSourceFactory;
     }
 
-    private HttpDataSource.Factory buildCronetDataSourceFactory(DefaultBandwidthMeter bandwidthMeter, int readTimeoutMs) {
+    private HttpDataSource.Factory buildCronetDataSourceFactory(
+            CronetEngine cronet, DefaultBandwidthMeter bandwidthMeter, int readTimeoutMs) {
         CronetDataSourceFactory dataSourceFactory =
                 new CronetDataSourceFactory(
-                        new CronetEngineWrapper(CronetManager.getEngine(mContext)),
+                        new CronetEngineWrapper(cronet),
                         Executors.newSingleThreadExecutor(),
                         null,
                         bandwidthMeter,

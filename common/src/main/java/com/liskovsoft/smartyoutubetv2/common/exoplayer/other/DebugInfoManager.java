@@ -27,12 +27,12 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.source.dash.manifest.DashManifest;
 import com.google.android.exoplayer2.source.sabr.manifest.SabrManifest;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
-import com.liskovsoft.sharedutils.cronet.CronetManager;
 import com.liskovsoft.sharedutils.helpers.AppInfoHelpers;
 import com.liskovsoft.sharedutils.helpers.DeviceHelpers;
 import com.liskovsoft.sharedutils.helpers.FileHelpers;
 import com.liskovsoft.sharedutils.helpers.Helpers;
 import com.liskovsoft.sharedutils.querystringparser.UrlQueryStringFactory;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.ExoMediaSourceFactory;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplayHolder.Mode;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.UhdHelper;
@@ -440,7 +440,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
                 && android.os.Build.VERSION.SDK_INT >= 34 ? "HttpEngine" :
                 playerTweaksData.getPlayerDataSource() == PlayerTweaksData.PLAYER_DATA_SOURCE_OKHTTP ? "OkHttp" :
                 playerTweaksData.getPlayerDataSource() == PlayerTweaksData.PLAYER_DATA_SOURCE_CRONET
-                        && CronetManager.getEngine(mContext) != null ? "Cronet" : "Default";
+                        && ExoMediaSourceFactory.isPlaybackCronetAvailable(mContext) ? "Cronet" : "Default";
         String protocol;
         Object manifest = mPlayer.getCurrentManifest();
         if (manifest == null) {
