@@ -1129,6 +1129,7 @@ public class AppDialogUtil {
         AppDialogPresenter dialogPresenter = AppDialogPresenter.instance(context);
 
         appendPlaylistDialogContent(context, video, callback, dialogPresenter, playlistInfos);
+        dialogPresenter.setId(R.id.l1_playlist_dialog);
         dialogPresenter.showDialog(context.getString(R.string.dialog_add_to_playlist), onFinish);
     }
 
