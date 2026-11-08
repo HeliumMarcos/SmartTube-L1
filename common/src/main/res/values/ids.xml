@@ -11,6 +11,8 @@
     <item name="l1_speed_dialog" type="id"/>
     <item name="l1_subtitles_dialog" type="id"/>
     <item name="l1_playlist_dialog" type="id"/>
+    <item name="l1_description_dialog" type="id"/>
+    <item name="l1_comments_dialog" type="id"/>
     <item name="action_repeat" type="id"/>
     <item name="action_search" type="id"/>
     <item name="action_pip" type="id"/>
