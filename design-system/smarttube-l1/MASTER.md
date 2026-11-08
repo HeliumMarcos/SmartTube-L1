@@ -29,7 +29,7 @@ Os recursos ficam em `smarttubetv/src/main/res/values/l1_theme.xml`. Reutilize o
 - Use a fonte nativa sem serifa. O cabeçalho identifica a tela, os títulos das opções usam peso médio e os detalhes ficam abaixo em cor secundária. Mantenha o texto legível com a fonte ampliada do Android.
 - A lista de vídeo mantém resolução e HDR juntos, como **(4K) 2160p • HDR10/PQ**, com **AV1 · 24 fps · 26,2 Mbps** abaixo. A lista de áudio usa o nome completo, como **Dolby Digital Plus**, com **5.1 surround · 384 kbps** abaixo quando esses dados estiverem disponíveis.
 - O cabeçalho da tela inicial reserva o canto superior direito à data e à hora em 24 horas.
-- No player, a data e a hora aparecem no canto superior esquerdo. O bloco no lado direito, abaixo da barra de progresso, mostra os dados das faixas ativas em linhas de **Vídeo** e **Áudio**. Use abreviações legíveis, como **DD+**, nesse espaço compacto.
+- No player, a data e a hora aparecem no canto superior esquerdo. O bloco no lado direito, abaixo da barra de progresso, mostra os dados das faixas ativas em linhas de **Vídeo** e **Áudio**. Mostre o nome completo do codec de áudio, como **Dolby Digital Plus**, e as taxas de bits de vídeo e áudio quando disponíveis.
 
 ## Controle remoto e estados
 
