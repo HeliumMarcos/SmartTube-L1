@@ -219,6 +219,13 @@ public class ViewUtil {
             title.setTextColor(textColor);
         }
 
+        // Improve long-form descriptions without changing link or timestamp handling.
+        TextView message = view.findViewById(android.R.id.message);
+        if (message != null) {
+            message.setTextColor(textColor);
+            message.setLineSpacing(context.getResources().getDisplayMetrics().density * 4f, 1.08f);
+        }
+
         View list = view.findViewById(android.R.id.list);
         if (list == null) {
             list = view.findViewById(R.id.list);
