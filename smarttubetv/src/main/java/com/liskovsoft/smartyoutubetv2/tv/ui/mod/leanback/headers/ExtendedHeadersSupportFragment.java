@@ -22,9 +22,14 @@ public class ExtendedHeadersSupportFragment extends HeadersSupportFragment {
     }
 
     private OnHeaderLongPressedListener mOnHeaderLongPressedListener;
+    private Runnable mOnHeaderFocusedListener;
 
     public ExtendedHeadersSupportFragment() {
         Helpers.setField(this, "mAdapterListener", mCustomAdapterListener);
+    }
+
+    public void setOnHeaderFocusedListener(Runnable listener) {
+        mOnHeaderFocusedListener = listener;
     }
 
     public void setOnHeaderLongPressedListener(OnHeaderLongPressedListener listener) {
