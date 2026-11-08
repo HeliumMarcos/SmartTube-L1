@@ -42,22 +42,6 @@
             android:visibility="gone" />
     </LinearLayout>
 
-
-
-        <com.liskovsoft.smartyoutubetv2.tv.ui.widgets.search.LongClickSearchOrbView
-            android:id="@+id/account_orb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:transitionGroup="true"
-            android:layout_marginStart="8dp"
-            android:nextFocusLeft="@id/title_orb"
-            android:nextFocusRight="@id/language_orb"
-            app:searchOrbIcon="@drawable/browse_title_account"
-            app:searchOrbColor="@color/orb_color"
-            app:searchOrbBrightColor="@color/orb_bright_color"
-            app:searchOrbIconColor="@color/orb_icon_color"
-            android:visibility="gone" />
-
     <FrameLayout android:layout_width="wrap_content"
                  android:layout_height="wrap_content"
                  android:layout_gravity="center_vertical">
@@ -78,4 +62,21 @@
             android:layout_height="@dimen/lb_browse_title_height"
             style="?attr/browseTitleTextStyle"/>
     </FrameLayout>
+
+
+
+        <com.liskovsoft.smartyoutubetv2.tv.ui.widgets.search.LongClickSearchOrbView
+            android:id="@+id/account_orb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:transitionGroup="true"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center_vertical"
+            android:nextFocusLeft="@id/title_orb"
+            android:nextFocusRight="@id/language_orb"
+            app:searchOrbIcon="@drawable/browse_title_account"
+            app:searchOrbColor="@color/orb_color"
+            app:searchOrbBrightColor="@color/orb_bright_color"
+            app:searchOrbIconColor="@color/orb_icon_color"
+            android:visibility="gone" />
 </LinearLayout>
