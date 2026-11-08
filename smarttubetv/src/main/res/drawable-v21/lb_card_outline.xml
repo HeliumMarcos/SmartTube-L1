@@ -6,6 +6,6 @@
     <solid android:color="#00000000"/>
     <corners android:radius="@dimen/lb_rounded_rect_corner_radius"/>
     <stroke
-        android:width="2.0dip"
-        android:color="#4dffffff"/>
+        android:width="2.5dp"
+        android:color="#69BFFF"/>
 </shape>
