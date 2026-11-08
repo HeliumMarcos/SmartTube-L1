@@ -2,6 +2,10 @@ package com.liskovsoft.smartyoutubetv2.tv.ui.widgets.complexcardview;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Outline;
+import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
+import android.view.ViewOutlineProvider;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -59,6 +63,16 @@ public class ComplexImageView extends RelativeLayout {
         mProgressBar = findViewById(R.id.clip_progress);
         mProgressContainer = findViewById(R.id.clip_info);
         mPreviewContainer = findViewById(R.id.preview_container);
+        if (android.os.Build.VERSION.SDK_INT >= 21) {
+            final float radius = 11f * getResources().getDisplayMetrics().density;
+            setOutlineProvider(new ViewOutlineProvider() {
+                @Override
+                public void getOutline(View view, Outline outline) {
+                    outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), radius);
+                }
+            });
+            setClipToOutline(true);
+        }
     }
 
     /**
