@@ -421,7 +421,8 @@ public class TrackSelectorUtil {
 
         return new Pair<>(prefix, String.valueOf(originHeight));
     }
-}    /**
+
+    /**
      * TV-friendly audio labels: codec name first, then channel layout and bitrate.
      * Only show a channel layout when it is explicitly reported by the stream.
      */
