@@ -2,6 +2,9 @@ name: Helium ARMv7 APK (manual)
 
 on:
   workflow_dispatch:
+  push:
+    branches: [helium-httpengine-test]
+    paths: ['.github/workflows/helium-armv7-manual.yml']
 
 permissions:
   contents: write
@@ -18,7 +21,7 @@ jobs:
       - name: Checkout code and submodules
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.ref == 'refs/heads/helium-enhanced' && github.sha || 'helium-enhanced' }}
+          ref: ${{ github.sha }}
           submodules: recursive
 
       - name: Set up JDK 17
@@ -110,6 +113,7 @@ jobs:
           retention-days: 7
 
       - name: Publish the APK and update manifest in GitHub Releases
+        if: ${{ github.ref == 'refs/heads/helium-enhanced' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
