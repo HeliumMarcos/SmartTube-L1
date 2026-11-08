@@ -312,7 +312,7 @@ public final class MimeTypes {
    * @return The {@link C}{@code .TRACK_TYPE_*} constant that corresponds to a specified MIME type.
    */
   public static int getTrackType(@Nullable String mimeType) {
-    if (TextUtils.isEmpty(mimeType)) {
+    if (mimeType == null || mimeType.isEmpty()) {
       return C.TRACK_TYPE_UNKNOWN;
     } else if (isAudio(mimeType)) {
       return C.TRACK_TYPE_AUDIO;

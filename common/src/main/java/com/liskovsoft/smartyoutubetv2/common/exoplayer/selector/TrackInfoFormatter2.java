@@ -35,7 +35,7 @@ public class TrackInfoFormatter2 {
 
     public String getQualityLabel() {
         String video = buildVideoDetails(mVideoFormat, mEnableBitrate);
-        String audio = buildAudioDetails(mAudioFormat, mUnknownChannels, false);
+        String audio = buildAudioDetails(mAudioFormat, mUnknownChannels, mEnableBitrate);
         String videoLine = video.isEmpty() ? "" : join(mVideoLabel, video, mSpeed);
         String audioLine = audio.isEmpty() ? "" : join(mAudioLabel, audio, videoLine.isEmpty() ? mSpeed : "");
         return videoLine.isEmpty() || audioLine.isEmpty() ? videoLine + audioLine : videoLine + "\n" + audioLine;
@@ -56,7 +56,7 @@ public class TrackInfoFormatter2 {
         if (format == null) {
             return "";
         }
-        return join(TrackSelectorUtil.buildAudioCodecLabel(format, true),
+        return join(TrackSelectorUtil.buildAudioCodecLabel(format, false),
                 format.channelCount > 0 ? TrackSelectorUtil.buildChannels(format, true) : unknownChannels,
                 showBitrate && format.bitrate > 0 ? Math.round(format.bitrate / 1000f) + " kbps" : "",
                 TrackSelectorUtil.buildDrcMark(format));

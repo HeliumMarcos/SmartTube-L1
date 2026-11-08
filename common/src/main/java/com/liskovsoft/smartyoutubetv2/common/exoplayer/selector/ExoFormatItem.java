@@ -12,6 +12,7 @@ import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.SubtitleTr
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ExoFormatItem implements FormatItem {
@@ -58,6 +59,25 @@ public class ExoFormatItem implements FormatItem {
             formats.add(item);
         }
 
+        return formats;
+    }
+
+    public static List<FormatItem> fromAudioTracks(Set<MediaTrack> tracks, Format selectedFormat,
+                                                   Map<Format, Integer> observedChannels) {
+        if (tracks == null) {
+            return null;
+        }
+
+        List<FormatItem> formats = new ArrayList<>();
+        for (MediaTrack track : tracks) {
+            ExoFormatItem item = from(track);
+            Format source = track.format;
+            item.mIsSelected = source == null ? selectedFormat == null : source.equals(selectedFormat);
+            if (source != null && observedChannels.containsKey(source)) {
+                item.mTitle = TrackSelectorUtil.buildReadableAudioTrackName(source, observedChannels.get(source));
+            }
+            formats.add(item);
+        }
         return formats;
     }
 

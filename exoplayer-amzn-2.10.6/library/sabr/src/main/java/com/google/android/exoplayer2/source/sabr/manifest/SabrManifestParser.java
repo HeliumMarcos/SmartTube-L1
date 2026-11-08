@@ -366,7 +366,7 @@ public class SabrManifestParser {
         int width = mediaFormat.getWidth();
         int height = mediaFormat.getHeight();
         float frameRate = Helpers.parseFloat(mediaFormat.getFps(), Format.NO_VALUE);
-        int audioChannels = Format.NO_VALUE;
+        int audioChannels = mediaFormat.getAudioChannelCount();
         int audioSamplingRate = Helpers.parseInt(ITagUtils.getAudioRateByTag(mediaFormat.getITag()), Format.NO_VALUE);
         String language = mediaFormat.getLanguage();
         String baseUrl = mFormatInfo.getServerAbrStreamingUrl();

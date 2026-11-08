@@ -1416,6 +1416,11 @@ public final class Format implements Parcelable {
       frameRate = manifestFormat.frameRate;
     }
 
+    int channelCount = this.channelCount;
+    if (channelCount <= 0 && trackType == C.TRACK_TYPE_AUDIO) {
+      channelCount = manifestFormat.channelCount;
+    }
+
     // Merge manifest and sample format values.
     @C.SelectionFlags int selectionFlags = this.selectionFlags | manifestFormat.selectionFlags;
     @C.RoleFlags int roleFlags = this.roleFlags | manifestFormat.roleFlags;

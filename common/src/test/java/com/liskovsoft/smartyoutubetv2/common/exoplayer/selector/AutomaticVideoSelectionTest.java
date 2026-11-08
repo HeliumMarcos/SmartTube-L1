@@ -8,9 +8,14 @@ import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector.Parameters;
 import com.google.android.exoplayer2.trackselection.TrackSelection.Definition;
 import com.google.android.exoplayer2.video.ColorInfo;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.AudioTrack;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.selector.RestoreTrackSelector;
 import org.junit.Test;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import static org.junit.Assert.*;
 
 /** Regression coverage for automatic quality, HDR and frame-rate grouping. */
@@ -102,10 +107,41 @@ public class AutomaticVideoSelectionTest {
                 384000, Format.NO_VALUE, 6, 48000, null, null, 0, null);
         Format unknown = Format.createAudioSampleFormat(null, "audio/eac3", null,
                 384000, Format.NO_VALUE, Format.NO_VALUE, 48000, null, null, 0, null);
-        assertEquals("DD+ · 5.1 · 384 kbps",
+        assertEquals("Dolby Digital Plus · 5.1 · 384 kbps",
                 TrackInfoFormatter2.buildAudioDetails(surround, "channels unknown", true));
-        assertEquals("DD+ · channels unknown",
+        assertEquals("Dolby Digital Plus · channels unknown",
                 TrackInfoFormatter2.buildAudioDetails(unknown, "channels unknown", false));
+    }
+
+    @Test public void audioMenuMarksSourceAndKeepsChannelCountsSeparate() {
+        AudioTrack surround = new AudioTrack(TrackSelectorManager.RENDERER_INDEX_AUDIO);
+        surround.format = Format.createAudioSampleFormat("surround", "audio/eac3", null,
+                384000, Format.NO_VALUE, Format.NO_VALUE, 48000, null, null, 0, null);
+        AudioTrack stereo = new AudioTrack(TrackSelectorManager.RENDERER_INDEX_AUDIO);
+        stereo.format = Format.createAudioSampleFormat("stereo", "audio/eac3", null,
+                192000, Format.NO_VALUE, 2, 48000, null, null, 0, null);
+
+        List<FormatItem> formats = ExoFormatItem.fromAudioTracks(
+                new LinkedHashSet<>(Arrays.asList(surround, stereo)), surround.format,
+                Collections.singletonMap(surround.format, 6));
+
+        assertTrue(formats.get(0).isSelected());
+        assertTrue(formats.get(0).getTitle().toString().contains("5.1"));
+        assertFalse(formats.get(1).isSelected());
+        assertTrue(formats.get(1).getTitle().toString().contains("2.0"));
+        assertSame(surround, formats.get(0).getTrack());
+    }
+
+    @Test public void sampleChannelsOverrideManifestAndFallBackWhenMissing() {
+        Format manifest = Format.createAudioSampleFormat("audio", "audio/eac3", "ec-3",
+                384000, Format.NO_VALUE, 6, 48000, null, null, 0, null);
+        Format unknown = Format.createAudioSampleFormat(null, "audio/eac3", "ec-3",
+                Format.NO_VALUE, Format.NO_VALUE, Format.NO_VALUE, 48000, null, null, 0, null);
+        Format stereo = Format.createAudioSampleFormat(null, "audio/eac3", "ec-3",
+                Format.NO_VALUE, Format.NO_VALUE, 2, 48000, null, null, 0, null);
+        assertEquals(6, unknown.copyWithManifestFormatInfo(manifest).channelCount);
+        assertEquals(384000, unknown.copyWithManifestFormatInfo(manifest).bitrate);
+        assertEquals(2, stereo.copyWithManifestFormatInfo(manifest).channelCount);
     }
 
     private static Definition automaticSelection(TrackGroupArray groups, int[][] support) throws Exception {

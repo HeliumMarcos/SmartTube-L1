@@ -731,7 +731,9 @@ public class PlayerTweaksData implements ProfileChangeListener {
         mIsChatPlacedLeft = Helpers.parseBoolean(split, 19, false);
         mIsRealChannelIconEnabled = Helpers.parseBoolean(split, 20, true);
         mPixelRatio = Helpers.parseFloat(split, 21, 1.0f);
-        mIsQualityInfoBitrateEnabled = Helpers.parseBoolean(split, 22, false);
+        // Enable both bitrate labels once for profiles created before the audio bitrate label.
+        mIsQualityInfoBitrateEnabled = !Helpers.parseBoolean(split, 63, false)
+                || Helpers.parseBoolean(split, 22, true);
         mIsSpeedButtonOldBehaviorEnabled = Helpers.parseBoolean(split, 23, false);
         mIsButtonLongClickEnabled = Helpers.parseBoolean(split, 24, true);
         mIsLongSpeedListEnabled = Helpers.parseBoolean(split, 25, true);
@@ -804,7 +806,7 @@ public class PlayerTweaksData implements ProfileChangeListener {
                 mIsOculusQuestFixEnabled, null, mIsExtraLongSpeedListEnabled, mIsQuickSkipVideosEnabled, mIsNetworkErrorFixingDisabled, mIsCommentsPlacedLeft,
                 null, mIsAudioFocusEnabled, mIsDontResizeVideoToFitDialogEnabled, mIsSuggestionsHorizontallyScrolled,
                 mIsQuickSkipShortsAltEnabled, mIsQuickSkipVideosAltEnabled, mIsAudioTimeStretchingEnabled, mIsQueueRespectsPlaybackMode, null,
-                mIsLiveEdgeEnabled
+                mIsLiveEdgeEnabled, true
                 ));
     }
 

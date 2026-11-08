@@ -43,8 +43,11 @@ import com.liskovsoft.smartyoutubetv2.common.prefs.PlayerTweaksData;
 
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.util.List;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExoPlayerController implements Player.EventListener, VideoRendererEventListener,
@@ -71,6 +74,7 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
     private boolean mIsEnded;
     private Runnable mOnVideoLoaded;
     private MediaSource mCurrentMediaSource;
+    private final Map<Format, Integer> mObservedAudioChannels = new HashMap<>();
     private final Set<String> mFailedAudioTracks = new HashSet<>();
     private int mAudioRecoveryAttempts;
 
@@ -177,6 +181,7 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
 
     private void openMediaSource(MediaSource mediaSource) {
         mCurrentMediaSource = mediaSource;
+        mObservedAudioChannels.clear();
         mFailedAudioTracks.clear();
         mAudioRecoveryAttempts = 0;
         mSabrLiveManifest = null; // set by the sabr live only
@@ -332,7 +337,22 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
     }
     
     public List<FormatItem> getAudioFormats() {
-        return ExoFormatItem.from(mTrackSelectorManager.getAudioTracks(), mPlayer != null ? mPlayer.getAudioFormat() : null);
+        return ExoFormatItem.fromAudioTracks(mTrackSelectorManager.getAudioTracks(),
+                getSelectedAudioSource(), mObservedAudioChannels);
+    }
+
+    private Format getSelectedAudioSource() {
+        if (mPlayer == null) {
+            return null;
+        }
+        TrackSelectionArray selections = mPlayer.getCurrentTrackSelections();
+        for (int i = 0; i < selections.length; i++) {
+            TrackSelection selection = selections.get(i);
+            if (selection != null && mPlayer.getRendererType(i) == C.TRACK_TYPE_AUDIO) {
+                return selection.getSelectedFormat();
+            }
+        }
+        return null;
     }
     
     public List<FormatItem> getSubtitleFormats() {
@@ -395,6 +415,13 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
 
     @Override
     public void onAudioInputFormatChanged(Format format) {
+        Format source = getSelectedAudioSource();
+        // A callback may arrive after a selection change. Check the representation ID and language.
+        if (format != null && format.channelCount > 0 && source != null && source.id != null
+                && source.id.equals(format.id) && Objects.equals(source.sampleMimeType, format.sampleMimeType)
+                && Objects.equals(source.language, format.language)) {
+            mObservedAudioChannels.put(source, format.channelCount);
+        }
         mTrackFormatter.setAudioFormat(format);
         setQualityInfo(mTrackFormatter.getQualityLabel());
     }
@@ -660,6 +687,7 @@ public class ExoPlayerController implements Player.EventListener, VideoRendererE
             e.printStackTrace();
         } finally {
             mPlayer = null;
+            mObservedAudioChannels.clear();
             mTrackFormatter.setVideoFormat(null);
             mTrackFormatter.setAudioFormat(null);
         }

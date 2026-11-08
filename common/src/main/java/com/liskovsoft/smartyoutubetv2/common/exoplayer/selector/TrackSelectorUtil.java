@@ -104,7 +104,8 @@ public class TrackSelectorUtil {
     }
 
     private static String buildLanguageString(Format format) {
-        return TextUtils.isEmpty(format.language) || "und".equals(format.language) ? "" : SubtitleTrack.trimIfAuto(format.language);
+        String language = format.language;
+        return language == null || language.isEmpty() || "und".equals(language) ? "" : SubtitleTrack.trimIfAuto(language);
     }
 
     private static String buildBitrateString(Format format) {
@@ -207,10 +208,14 @@ public class TrackSelectorUtil {
     }
 
     public static String buildChannels(Format format, boolean compact) {
-        if (format == null || format.channelCount == Format.NO_VALUE || format.channelCount <= 0) {
+        return buildChannels(format != null ? format.channelCount : Format.NO_VALUE, compact);
+    }
+
+    private static String buildChannels(int channelCount, boolean compact) {
+        if (channelCount <= 0) {
             return "canais não informados";
         }
-        switch (format.channelCount) {
+        switch (channelCount) {
             case 1: return compact ? "1.0" : "1.0 mono";
             case 2: return compact ? "2.0" : "2.0 estéreo";
             case 3: return "3.0";
@@ -219,7 +224,7 @@ public class TrackSelectorUtil {
             case 6: return compact ? "5.1" : "5.1 surround";
             case 7: return compact ? "6.1" : "6.1 surround";
             case 8: return compact ? "7.1" : "7.1 surround";
-            default: return format.channelCount + " canais";
+            default: return channelCount + " canais";
         }
     }
 
@@ -431,10 +436,14 @@ public class TrackSelectorUtil {
      * Only show a channel layout when it is explicitly reported by the stream.
      */
     public static String buildReadableAudioTrackName(Format format) {
+        return buildReadableAudioTrackName(format, format != null ? format.channelCount : Format.NO_VALUE);
+    }
+
+    static String buildReadableAudioTrackName(Format format, int channelCount) {
         // A two-line label keeps the codec prominent on a TV screen.
         // The second line provides a concise technical summary.
         String title = buildAudioCodecLabel(format);
-        String details = buildChannels(format);
+        String details = buildChannels(channelCount, false);
         if (format != null && format.bitrate > 0) {
             details = joinWithSeparator(details, Math.round(format.bitrate / 1000f) + " kbps");
         }
