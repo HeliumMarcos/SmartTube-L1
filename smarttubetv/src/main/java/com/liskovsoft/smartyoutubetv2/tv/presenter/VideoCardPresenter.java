@@ -72,6 +72,9 @@ public class VideoCardPresenter extends LongClickPresenter {
             public void setSelected(boolean selected) {
                 updateCardBackgroundColor(this, selected);
                 super.setSelected(selected);
+                if (android.os.Build.VERSION.SDK_INT >= 23) {
+                    setForeground(selected ? ContextCompat.getDrawable(getContext(), R.drawable.lb_card_outline) : null);
+                }
             }
         };
 
