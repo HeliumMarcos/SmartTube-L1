@@ -222,6 +222,17 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
      */
     @Override
     public void startPreferenceFragment(@NonNull Fragment fragment) {
+        View root = getView();
+        if (root != null && mId == R.id.playback_quality_dialog) {
+            View panel = root.findViewById(R.id.settings_preference_fragment_container);
+            if (panel != null && panel.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) panel.getLayoutParams();
+                int vertical = getResources().getDimensionPixelSize(R.dimen.l1_menu_vertical_margin);
+                int right = getResources().getDimensionPixelSize(R.dimen.l1_menu_right_margin);
+                params.setMargins(params.leftMargin, vertical, right, vertical);
+                panel.setLayoutParams(params);
+            }
+        }
         final FragmentTransaction transaction = getChildFragmentManager().beginTransaction();
         final Fragment prevFragment =
                 getChildFragmentManager().findFragmentByTag(PREFERENCE_FRAGMENT_TAG);

@@ -69,22 +69,16 @@ public class HQDialogController extends BasePlayerController {
             return;
         }
 
-        List<FormatItem> videoFormats = getPlayer().getVideoFormats();
-        String videoFormatsTitle = getContext().getString(R.string.title_video_formats);
+        addCategoryInt(OptionCategory.liveRadioList(VIDEO_FORMATS_ID,
+                getContext().getString(R.string.title_video_formats), () -> getFormatOptions(true)));
+        addCategoryInt(OptionCategory.liveRadioList(AUDIO_FORMATS_ID,
+                getContext().getString(R.string.title_audio_formats), () -> getFormatOptions(false)));
+    }
 
-        List<FormatItem> audioFormats = getPlayer().getAudioFormats();
-        String audioFormatsTitle = getContext().getString(R.string.title_audio_formats);
-
-        addCategoryInt(OptionCategory.from(
-                VIDEO_FORMATS_ID,
-                OptionCategory.TYPE_RADIO_LIST,
-                videoFormatsTitle,
-                UiOptionItem.from(videoFormats, this::selectFormatOption, getContext().getString(R.string.option_disabled))));
-        addCategoryInt(OptionCategory.from(
-                AUDIO_FORMATS_ID,
-                OptionCategory.TYPE_RADIO_LIST,
-                audioFormatsTitle,
-                UiOptionItem.from(audioFormats, this::selectFormatOption, getContext().getString(R.string.option_disabled))));
+    private List<OptionItem> getFormatOptions(boolean video) {
+        List<FormatItem> formats = getPlayer() == null ? null
+                : video ? getPlayer().getVideoFormats() : getPlayer().getAudioFormats();
+        return UiOptionItem.from(formats, this::selectFormatOption, getContext().getString(R.string.option_disabled));
     }
 
     private void selectFormatOption(OptionItem option) {

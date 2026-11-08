@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector.Paramet
 import com.google.android.exoplayer2.trackselection.TrackSelection.Definition;
 import com.google.android.exoplayer2.video.ColorInfo;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.AudioTrack;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.VideoTrack;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.selector.RestoreTrackSelector;
 import org.junit.Test;
 import java.lang.reflect.Method;
@@ -111,6 +112,35 @@ public class AutomaticVideoSelectionTest {
                 TrackInfoFormatter2.buildAudioDetails(surround, "channels unknown", true));
         assertEquals("Dolby Digital Plus · channels unknown",
                 TrackInfoFormatter2.buildAudioDetails(unknown, "channels unknown", false));
+    }
+
+    @Test public void videoMenuMarksCurrentInputInsteadOfQueuedResolution() {
+        VideoTrack twoK = new VideoTrack(TrackSelectorManager.RENDERER_INDEX_VIDEO);
+        twoK.format = Format.createVideoSampleFormat("shared", "video/av01", "av01",
+                13500000, Format.NO_VALUE, 2560, 1440, 60, null, null);
+        VideoTrack fourK = new VideoTrack(TrackSelectorManager.RENDERER_INDEX_VIDEO);
+        fourK.format = Format.createVideoSampleFormat("shared", "video/av01", "av01",
+                27000000, Format.NO_VALUE, 3840, 2160, 60, null, null);
+        Format input = Format.createVideoSampleFormat("shared", "video/av01", "av01",
+                Format.NO_VALUE, Format.NO_VALUE, 3840, 2160, 60, null, null);
+
+        List<FormatItem> formats = ExoFormatItem.fromVideoTracks(
+                new LinkedHashSet<>(Arrays.asList(twoK, fourK)), input, twoK.format);
+
+        assertFalse(formats.get(0).isSelected());
+        assertTrue(formats.get(1).isSelected());
+        assertSame(fourK, formats.get(1).getTrack());
+    }
+
+    @Test public void manifestResolutionWinsWhenSabrReusesDecoderDimensions() {
+        VideoTrack twoK = new VideoTrack(TrackSelectorManager.RENDERER_INDEX_VIDEO);
+        twoK.format = Format.createVideoSampleFormat("700", "video/av01", "av01",
+                13078242, Format.NO_VALUE, 2560, 1440, 60, null, null);
+        Format staleInput = Format.createVideoSampleFormat("700", "video/av01", "av01",
+                13078242, Format.NO_VALUE, 3840, 2160, 60, null, null);
+
+        assertSame(twoK.format, ExoFormatItem.resolveVideoSource(Collections.singleton(twoK), staleInput));
+        assertTrue(ExoFormatItem.fromVideoTracks(Collections.singleton(twoK), staleInput, null).get(0).isSelected());
     }
 
     @Test public void audioMenuMarksSourceAndKeepsChannelCountsSeparate() {

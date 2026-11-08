@@ -13,6 +13,7 @@ import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.SubtitleTr
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class ExoFormatItem implements FormatItem {
@@ -40,26 +41,61 @@ public class ExoFormatItem implements FormatItem {
     private boolean mIsDrc;
 
     public static List<FormatItem> from(Set<MediaTrack> mediaTracks) {
-        return from(mediaTracks, null);
-    }
-
-    public static List<FormatItem> from(Set<MediaTrack> mediaTracks, Format activeFormat) {
         if (mediaTracks == null) {
             return null;
         }
-
         List<FormatItem> formats = new ArrayList<>();
-        ExoFormatItem active = activeFormat != null ? from(activeFormat) : null;
-
         for (MediaTrack track : mediaTracks) {
-            ExoFormatItem item = from(track);
-            if (active != null) {
-                item.mIsSelected = track.format != null && item.equals(active);
-            }
-            formats.add(item);
+            formats.add(from(track));
+        }
+        return formats;
+    }
+
+    public static List<FormatItem> fromVideoTracks(Set<MediaTrack> tracks, Format input, Format selectedSource) {
+        List<FormatItem> formats = from(tracks);
+        if (formats == null) {
+            return null;
         }
 
+        Format active = input == null ? selectedSource : resolveVideoSource(tracks, input);
+        for (FormatItem entry : formats) {
+            ExoFormatItem item = (ExoFormatItem) entry;
+            item.mIsSelected = Objects.equals(item.mTrack.format, active);
+        }
         return formats;
+    }
+
+    public static Format resolveVideoSource(Set<MediaTrack> tracks, Format input) {
+        if (tracks == null || input == null || input.id == null) {
+            return input;
+        }
+
+        Format match = null;
+        Format sameSize = null;
+        boolean ambiguousId = false;
+        boolean ambiguousSize = false;
+        for (MediaTrack track : tracks) {
+            Format source = track.format;
+            if (input.equals(source)) {
+                return source;
+            }
+            if (source == null || !input.id.equals(source.id)
+                    || !Objects.equals(input.sampleMimeType, source.sampleMimeType)) {
+                continue;
+            }
+
+            // Some adaptive switches reuse an initialization segment with stale dimensions.
+            ambiguousId |= match != null;
+            match = source;
+            if (input.width == source.width && input.height == source.height) {
+                ambiguousSize |= sameSize != null;
+                sameSize = source;
+            }
+        }
+        if (match == null || (ambiguousId && (sameSize == null || ambiguousSize))) {
+            return input;
+        }
+        return ambiguousId ? sameSize : match;
     }
 
     public static List<FormatItem> fromAudioTracks(Set<MediaTrack> tracks, Format selectedFormat,

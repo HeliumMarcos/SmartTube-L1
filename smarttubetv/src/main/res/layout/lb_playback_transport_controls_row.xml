@@ -109,6 +109,22 @@
                 android:layout_alignParentStart="true"
             />
 
+            <FrameLayout
+                android:id="@+id/additional_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@id/controls_dock"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="@dimen/l1_menu_inset">
+                <TextView
+                    android:id="@+id/quality_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    style="?attr/playbackControlsTimeStyle" />
+            </FrameLayout>
+
         </RelativeLayout>
 
         <com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.misc.SeekBar
@@ -180,20 +196,6 @@
                         style="?attr/playbackControlsTimeStyle" />
                 </RelativeLayout>
 
-                <FrameLayout
-                    android:id="@+id/additional_info"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@id/current_time_wrapper"
-                    android:layout_alignParentEnd="true"
-                    android:layout_marginTop="@dimen/l1_menu_row_gap">
-                    <TextView
-                        android:id="@+id/quality_info"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="end"
-                        style="?attr/playbackControlsTimeStyle" />
-                </FrameLayout>
             </RelativeLayout>
         </RelativeLayout>
 

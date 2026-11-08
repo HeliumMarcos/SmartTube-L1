@@ -29,13 +29,13 @@ Os recursos ficam em `smarttubetv/src/main/res/values/l1_theme.xml`. Reutilize o
 - Use a fonte nativa sem serifa. O cabeçalho identifica a tela, os títulos das opções usam peso médio e os detalhes ficam abaixo em cor secundária. Mantenha o texto legível com a fonte ampliada do Android.
 - A lista de vídeo mantém resolução e HDR juntos, como **(4K) 2160p • HDR10/PQ**, com **AV1 · 24 fps · 26,2 Mbps** abaixo. A lista de áudio usa o nome completo, como **Dolby Digital Plus**, com **5.1 surround · 384 kbps** abaixo quando esses dados estiverem disponíveis.
 - O cabeçalho da tela inicial reserva o canto superior direito à data e à hora em 24 horas.
-- No player, a data e a hora aparecem no canto superior esquerdo. O bloco no lado direito, abaixo da barra de progresso, mostra os dados das faixas ativas em linhas de **Vídeo** e **Áudio**. Mostre o nome completo do codec de áudio, como **Dolby Digital Plus**, e as taxas de bits de vídeo e áudio quando disponíveis.
+- No player, a data e a hora aparecem no canto superior direito. O bloco no lado direito, logo acima da barra de progresso, mostra os dados das faixas ativas em linhas de **Vídeo** e **Áudio**. Mostre o nome completo do codec de áudio, como **Dolby Digital Plus**, e as taxas de bits de vídeo e áudio quando disponíveis.
 
 ## Controle remoto e estados
 
 - Setas para cima e para baixo percorrem a lista. **OK** abre uma categoria ou aplica uma opção. **Voltar** fecha o submenu e devolve o foco à categoria de origem.
 - A linha focada usa contorno coral de 2 dp. O rádio ou a caixa de seleção indica o valor aplicado independentemente do foco. A seta no fim de uma linha indica que ela abre um submenu.
-- Deixe o vídeo visível enquanto o painel lateral estiver aberto. Preserve o botão **HQ** na fileira atual do player e mantenha as opções que aparecem conforme o dispositivo ou a reprodução.
+- Deixe o vídeo visível enquanto o painel lateral estiver aberto. O HQ e seus submenus usam margem de 16 dp no topo e na base e de 8 dp à direita. Preserve o botão **HQ** na fileira atual do player e mantenha as opções que aparecem conforme o dispositivo ou a reprodução.
 - Use a ordem atual das categorias, com **Predefinições de áudio** logo abaixo de **Predefinições de vídeo**. O menu de formatos escolhe a faixa do vídeo atual. As predefinições guardam uma preferência.
 
 ## Aplicação nas próximas telas

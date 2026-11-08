@@ -5,6 +5,10 @@ import java.util.Collections;
 import java.util.List;
 
 public class OptionCategory {
+    public interface OptionsProvider {
+        List<OptionItem> get();
+    }
+
     public static OptionCategory radioList(CharSequence title, List<OptionItem> items) {
         return new OptionCategory(title, items, TYPE_RADIO_LIST);
     }
@@ -45,6 +49,10 @@ public class OptionCategory {
         return new OptionCategory(title, options, type, id);
     }
 
+    public static OptionCategory liveRadioList(int id, CharSequence title, OptionsProvider options) {
+        return new OptionCategory(title, Collections.emptyList(), TYPE_RADIO_LIST, id, options);
+    }
+
     public static OptionCategory from(int id, int type, CharSequence title, OptionItem option) {
         return new OptionCategory(title, Collections.singletonList(option), type, id);
     }
@@ -54,6 +62,12 @@ public class OptionCategory {
     }
 
     private OptionCategory(CharSequence title, List<OptionItem> options, int type, int id) {
+        this(title, options, type, id, null);
+    }
+
+    private OptionCategory(CharSequence title, List<OptionItem> options, int type, int id,
+                           OptionsProvider liveOptions) {
+        this.liveOptions = liveOptions;
         this.id = id;
         this.type = type;
         this.title = title;
@@ -72,4 +86,5 @@ public class OptionCategory {
     public final int type;
     public final CharSequence title;
     public final List<OptionItem> options;
+    public final OptionsProvider liveOptions;
 }

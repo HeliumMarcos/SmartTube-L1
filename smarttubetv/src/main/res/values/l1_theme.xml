@@ -9,6 +9,8 @@
     <color name="l1_text_secondary">#BCC7D9</color>
     <color name="l1_launcher_background_alt">#16304B</color>
     <dimen name="l1_menu_panel_radius">16dp</dimen>
+    <dimen name="l1_menu_vertical_margin">16dp</dimen>
+    <dimen name="l1_menu_right_margin">8dp</dimen>
     <dimen name="l1_menu_row_radius">8dp</dimen>
     <dimen name="l1_menu_row_gap">4dp</dimen>
     <dimen name="l1_menu_inset">8dp</dimen>

@@ -286,7 +286,6 @@ public class SabrProcessor {
         ProcessMediaResult result = new ProcessMediaResult();
 
         if (!segment.discard) {
-            Log.d(TAG, "processMedia: part created. contentLength: %s", contentLength);
             result.sabrPart = new MediaSegmentDataSabrPart(
                     segment.initializedFormat.formatSelector,
                     segment.formatId,

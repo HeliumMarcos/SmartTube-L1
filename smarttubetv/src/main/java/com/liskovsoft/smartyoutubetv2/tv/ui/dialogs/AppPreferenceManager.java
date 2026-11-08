@@ -151,9 +151,24 @@ public class AppPreferenceManager {
     }
 
     public Preference createRadioListPreference(OptionCategory category) {
-        ListPreference pref = new ListPreference(mContext);
+        ListPreference pref;
+        if (category.liveOptions == null) {
+            pref = new ListPreference(mContext);
+        } else {
+            pref = new ListPreference(mContext) {
+                @Override
+                protected void onClick() {
+                    List<OptionItem> options = category.liveOptions.get();
+                    if (options != null && !options.isEmpty()) {
+                        bindSingleSelectOptions(this, options);
+                        super.onClick();
+                    }
+                }
+            };
+        }
 
-        initSingleSelectListPreference(category, pref);
+        initDialogPreference(category, pref);
+        bindSingleSelectOptions(pref, category.options);
 
         return pref;
     }
@@ -166,17 +181,15 @@ public class AppPreferenceManager {
         return pref;
     }
 
-    private void initSingleSelectListPreference(OptionCategory category, ListPreference pref) {
-        initDialogPreference(category, pref);
-
-        ListPreferenceData prefData = createListPreferenceData(category.options);
+    private void bindSingleSelectOptions(ListPreference pref, List<OptionItem> options) {
+        ListPreferenceData prefData = createListPreferenceData(options);
 
         pref.setEntries(prefData.entries);
         pref.setEntryValues(prefData.values);
         pref.setValue(prefData.defaultValue);
 
         pref.setOnPreferenceChangeListener((preference, newValue) -> {
-            for (OptionItem optionItem : category.options) {
+            for (OptionItem optionItem : options) {
                 if (newValue.equals(optionItem.toString())) {
                     optionItem.onSelect(true);
                     break;

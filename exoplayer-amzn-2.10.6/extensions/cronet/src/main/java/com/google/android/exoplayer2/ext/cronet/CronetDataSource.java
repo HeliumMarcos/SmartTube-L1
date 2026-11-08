@@ -109,7 +109,8 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
   private static final Pattern CONTENT_RANGE_HEADER_PATTERN =
       Pattern.compile("^bytes (\\d+)-(\\d+)/(\\d+)$");
   // The size of read buffer passed to cronet UrlRequest.read().
-  private static final int READ_BUFFER_SIZE_BYTES = 32 * 1024;
+  // Larger reads reduce callback handoffs on fast links. The buffer is allocated lazily.
+  private static final int READ_BUFFER_SIZE_BYTES = 128 * 1024;
 
   private final CronetEngine cronetEngine;
   private final Executor executor;
@@ -137,6 +138,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
   // operation.open() calls ensure writes into the buffer are visible to reads made by the calling
   // thread.
   private ByteBuffer readBuffer;
+  @Nullable private String lastNegotiatedProtocol;
 
   // Written from the Cronet thread only. operation.open() calls ensure writes are visible to reads
   // made by the calling thread.
@@ -329,6 +331,7 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
     } catch (IOException e) {
       throw new OpenException(e, currentDataSpec, Status.IDLE);
     }
+    long requestStartedMs = clock.elapsedRealtime();
     currentUrlRequest.start();
 
     transferInitializing(dataSpec);
@@ -344,6 +347,13 @@ public class CronetDataSource extends BaseDataSource implements HttpDataSource {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new OpenException(new InterruptedIOException(e), dataSpec, Status.INVALID);
+    }
+
+    String protocol = responseInfo.getNegotiatedProtocol();
+    if (!TextUtils.equals(lastNegotiatedProtocol, protocol)) {
+      lastNegotiatedProtocol = protocol;
+      Log.d(TAG, "Media protocol=" + protocol
+          + ", responseHeadersMs=" + (clock.elapsedRealtime() - requestStartedMs));
     }
 
     // Check for a valid response code.
