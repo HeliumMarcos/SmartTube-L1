@@ -1,6 +1,8 @@
 package com.liskovsoft.smartyoutubetv2.tv.util;
 
+import android.app.Fragment;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.os.Build.VERSION;
@@ -22,6 +24,7 @@ import androidx.leanback.widget.VerticalGridView;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.liskovsoft.sharedutils.helpers.Helpers;
+import com.liskovsoft.smartyoutubetv2.common.app.views.AppDialogView;
 import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.adapter.VideoGroupObjectAdapter;
 import com.liskovsoft.smartyoutubetv2.tv.ui.widgets.marqueetextview.MarqueeTextView;
@@ -176,6 +179,56 @@ public class ViewUtil {
         return new RequestOptions()
                 .diskCacheStrategy(DiskCacheStrategy.NONE) // ensure start animation from beginning
                 .skipMemoryCache(true); // ensure start animation from beginning
+    }
+
+    public static boolean isPlaybackQualityDialog(Fragment parent) {
+        return parent instanceof AppDialogView &&
+                ((AppDialogView) parent).getViewId() == R.id.playback_quality_dialog;
+    }
+
+    public static void stylePlaybackQualityDialog(Fragment parent, View view) {
+        if (view == null || !isPlaybackQualityDialog(parent)) {
+            return;
+        }
+
+        Context context = view.getContext();
+        view.setBackgroundResource(R.drawable.l1_menu_panel);
+        View header = view.findViewById(R.id.decor_title_container);
+        if (header != null) {
+            header.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        int textColor = ContextCompat.getColor(context, R.color.l1_text_primary);
+        int secondaryColor = ContextCompat.getColor(context, R.color.l1_text_secondary);
+        TextView title = view.findViewById(R.id.decor_title);
+        if (title != null) {
+            title.setTextColor(textColor);
+        }
+
+        View list = view.findViewById(android.R.id.list);
+        if (list == null) {
+            list = view.findViewById(R.id.list);
+        }
+        if (list instanceof VerticalGridView) {
+            VerticalGridView grid = (VerticalGridView) list;
+            int spacing = context.getResources().getDimensionPixelSize(R.dimen.l1_menu_row_gap);
+            grid.setVerticalSpacing(spacing);
+            grid.setOnChildLaidOutListener((parentGrid, row, position, id) -> {
+                if (Boolean.TRUE.equals(row.getTag(R.id.l1_menu_styled_row))) {
+                    return;
+                }
+                row.setBackgroundResource(R.drawable.l1_menu_row);
+                row.setTag(R.id.l1_menu_styled_row, true);
+                TextView rowTitle = row.findViewById(android.R.id.title);
+                TextView summary = row.findViewById(android.R.id.summary);
+                if (rowTitle != null) {
+                    rowTitle.setTextColor(textColor);
+                }
+                if (summary != null) {
+                    summary.setTextColor(secondaryColor);
+                }
+            });
+        }
     }
 
     public static void enableTransparentDialog(Context context, View rootView) {

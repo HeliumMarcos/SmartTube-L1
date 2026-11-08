@@ -11,6 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.leanback.preference.LeanbackPreferenceFragment;
 import androidx.leanback.preference.LeanbackSettingsFragment;
+import androidx.preference.DialogPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.MultiSelectListPreference;
 import androidx.preference.Preference;
@@ -325,6 +326,7 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
                 ViewUtil.enableTransparentDialog(getActivity(), view);
             }
 
+            ViewUtil.stylePlaybackQualityDialog(getParentFragment(), view);
             return view;
         }
 
@@ -341,7 +343,11 @@ public class AppDialogFragment extends LeanbackSettingsFragment implements AppDi
             if (mCategories != null) {
                 for (OptionCategory category : mCategories) {
                     if (category.options != null) {
-                        screen.addPreference(mManager.createPreference(category));
+                        Preference preference = mManager.createPreference(category);
+                        if (ViewUtil.isPlaybackQualityDialog(getParentFragment()) && preference instanceof DialogPreference) {
+                            preference.setLayoutResource(R.layout.playback_quality_category);
+                        }
+                        screen.addPreference(preference);
                     }
                 }
             }

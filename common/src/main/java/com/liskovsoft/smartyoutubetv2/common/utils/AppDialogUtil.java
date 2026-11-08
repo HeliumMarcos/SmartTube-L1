@@ -282,30 +282,31 @@ public class AppDialogUtil {
      * manufacture 5.1 tracks, or override Android decoder/passthrough capabilities.
      */
     public static OptionCategory createAudioPresetsCategory(Context context) {
+        return createAudioPresetsCategory(context, () -> {});
+    }
+
+    public static OptionCategory createAudioPresetsCategory(Context context, Runnable onFormatSelected) {
         PlayerData playerData = PlayerData.instance(context);
         FormatItem selected = playerData.getFormat(FormatItem.TYPE_AUDIO);
         List<OptionItem> options = new ArrayList<>();
 
-        FormatItem automatic = ExoFormatItem.fromAudioSpecs("auto,null");
-        options.add(UiOptionItem.from(context.getString(R.string.audio_preset_auto),
-                option -> playerData.setFormat(automatic),
-                automatic.equals(selected)));
-
-        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_eac3), "ec-3");
-        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_ac3), "ac-3");
-        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_aac), "mp4a");
-        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_opus), "opus");
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_auto), "auto", onFormatSelected);
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_eac3), "ec-3", onFormatSelected);
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_ac3), "ac-3", onFormatSelected);
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_aac), "mp4a", onFormatSelected);
+        addAudioPreset(options, playerData, selected, context.getString(R.string.audio_preset_opus), "opus", onFormatSelected);
 
         return OptionCategory.from(AUDIO_PRESETS_ID, OptionCategory.TYPE_RADIO_LIST,
                 context.getString(R.string.audio_presets), options);
     }
 
     private static void addAudioPreset(List<OptionItem> options, PlayerData playerData,
-                                       FormatItem selected, String label, String codec) {
+                                       FormatItem selected, String label, String codec, Runnable onFormatSelected) {
         FormatItem format = ExoFormatItem.fromAudioSpecs(codec + ",null");
-        options.add(UiOptionItem.from(label,
-                option -> playerData.setFormat(format),
-                format.equals(selected)));
+        options.add(UiOptionItem.from(label, option -> {
+            playerData.setFormat(format);
+            onFormatSelected.run();
+        }, format.equals(selected)));
     }
 
     private static List<OptionItem> fromPresets(Context context, VideoPreset[] presets, Runnable onFormatSelected) {

@@ -38,6 +38,7 @@ import com.liskovsoft.smartyoutubetv2.common.app.presenters.PlaybackPresenter;
 import com.liskovsoft.smartyoutubetv2.common.utils.Utils;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.clickable.LinkifyCompat;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.clickable.LinkifyCompat.LinkifyClickHandler;
+import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -210,6 +211,7 @@ public class LeanbackListPreferenceDialogFragment extends LeanbackPreferenceDial
             parent.removeView(verticalGridView);
         }
 
+        ViewUtil.stylePlaybackQualityDialog(getParentFragment(), view);
         return view;
     }
 

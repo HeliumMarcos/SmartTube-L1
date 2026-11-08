@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/l1_menu_surface"/>
+    <stroke android:width="1dp" android:color="@color/l1_menu_border"/>
+    <corners android:radius="@dimen/l1_menu_panel_radius"/>
+    <padding
+        android:left="@dimen/l1_menu_inset"
+        android:top="@dimen/l1_menu_inset"
+        android:right="@dimen/l1_menu_inset"
+        android:bottom="@dimen/l1_menu_inset"/>
+</shape>

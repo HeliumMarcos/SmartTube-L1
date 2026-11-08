@@ -60,6 +60,7 @@ public class HQDialogController extends BasePlayerController {
         appendOptions(mCategoriesInt);
         appendOptions(mCategories);
 
+        mAppDialogPresenter.setId(R.id.playback_quality_dialog);
         mAppDialogPresenter.showDialog(getContext().getString(R.string.playback_settings), this::onDialogHide);
     }
 
@@ -191,22 +192,24 @@ public class HQDialogController extends BasePlayerController {
 
     private void addPresetsCategory() {
         addCategoryInt(AppDialogUtil.createVideoPresetsCategory(
-                getContext(), () -> {
-                    if (getPlayer() == null) {
-                        return;
-                    }
+                getContext(), () -> applyPreset(FormatItem.TYPE_VIDEO)));
+        addCategoryInt(AppDialogUtil.createAudioPresetsCategory(
+                getContext(), () -> applyPreset(FormatItem.TYPE_AUDIO)));
+    }
 
-                    FormatItem format = getPlayerData().getFormat(FormatItem.TYPE_VIDEO);
-                    getPlayer().setFormat(format);
+    private void applyPreset(int type) {
+        if (getPlayer() == null) {
+            return;
+        }
 
-                    if (!getPlayer().containsMedia()) {
-                        getPlayer().reloadPlayback();
-                    }
+        getPlayer().setFormat(getPlayerData().getFormat(type));
+        if (!getPlayer().containsMedia()) {
+            getPlayer().reloadPlayback();
+        }
 
-                    // Make result easily be spotted by the user
-                    getPlayer().showOverlay(false);
-                }
-        ));
+        if (type == FormatItem.TYPE_VIDEO) {
+            getPlayer().showOverlay(false);
+        }
     }
 
     private void addVideoZoomCategory() {

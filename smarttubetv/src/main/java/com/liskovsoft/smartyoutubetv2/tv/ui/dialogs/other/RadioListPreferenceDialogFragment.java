@@ -1,14 +1,21 @@
 package com.liskovsoft.smartyoutubetv2.tv.ui.dialogs.other;
 
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.leanback.widget.VerticalGridView;
 import androidx.preference.ListPreference;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
+import com.liskovsoft.smartyoutubetv2.tv.R;
 import com.liskovsoft.smartyoutubetv2.tv.ui.mod.leanback.preference.LeanbackListPreferenceDialogFragment;
 import com.liskovsoft.smartyoutubetv2.tv.util.ViewUtil;
 
@@ -77,6 +84,24 @@ public class RadioListPreferenceDialogFragment extends LeanbackListPreferenceDia
     public class AdapterRadio extends AdapterSingle {
         public AdapterRadio(CharSequence[] entries, CharSequence[] entryValues, CharSequence selectedValue) {
             super(entries, entryValues, selectedValue);
+        }
+
+        @Override
+        public void onBindViewHolder(ViewHolder holder, int position) {
+            super.onBindViewHolder(holder, position);
+            if (!ViewUtil.isPlaybackQualityDialog(getParentFragment())) {
+                return;
+            }
+
+            CharSequence label = holder.getTitleView().getText();
+            int detailStart = TextUtils.indexOf(label, '\n') + 1;
+            if (detailStart > 0 && detailStart < label.length()) {
+                SpannableString styled = new SpannableString(label);
+                int color = ContextCompat.getColor(holder.itemView.getContext(), R.color.l1_text_secondary);
+                styled.setSpan(new ForegroundColorSpan(color), detailStart, label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                styled.setSpan(new RelativeSizeSpan(0.88f), detailStart, label.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                holder.getTitleView().setText(styled);
+            }
         }
 
         @Override
