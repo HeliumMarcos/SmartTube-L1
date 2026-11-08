@@ -1,12 +1,7 @@
 name: Helium ARMv7 APK (manual)
-# Rebuild requested after fixing premature Java class closure.
 
 on:
   workflow_dispatch:
-  push:
-    branches: [helium-enhanced]
-    paths:
-      - '.github/workflows/helium-armv7-manual.yml'
 
 permissions:
   contents: write
@@ -23,7 +18,7 @@ jobs:
       - name: Checkout code and submodules
         uses: actions/checkout@v5
         with:
-          ref: helium-enhanced
+          ref: ${{ github.ref == 'refs/heads/helium-enhanced' && github.sha || 'helium-enhanced' }}
           submodules: recursive
 
       - name: Set up JDK 17
@@ -76,39 +71,72 @@ jobs:
           ./gradlew :smarttubetv:assembleStbetaDebug --no-daemon
 
       - name: Verify APK signature and update version
+        id: apk
         shell: bash
         run: |
           set -euo pipefail
-          apk="$(find smarttubetv/build/outputs/apk -type f -name '*armeabi-v7a.apk' -print -quit)"
-          test -n "$apk"
-          "$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner" verify --print-certs "$apk"
-          echo "CI versionCode: $((2462 + GITHUB_RUN_NUMBER))" >> "$GITHUB_STEP_SUMMARY"
+          mapfile -t apks < <(find smarttubetv/build/outputs/apk -type f -name '*armeabi-v7a.apk')
+          test "${#apks[@]}" -eq 1
+          apk="${apks[0]}"
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          signature="$("$tools/apksigner" verify --print-certs "$apk")"
+          printf '%s\n' "$signature"
+          fingerprint="$(awk -F': ' '/certificate SHA-256 digest:/ { print $NF; exit }' <<< "$signature")"
+          if [[ "$fingerprint" != 4bb3ab895550dc9d8ff13f14037fac6bb721d5d2ab382dfc274be56aa101f3a1 ]]; then
+            echo "::error::The APK certificate does not match the SmartTube-L1 update certificate."
+            exit 1
+          fi
+          badging="$("$tools/aapt" dump badging "$apk")"
+          package="$(awk -F"'" '/^package: / { print $2; exit }' <<< "$badging")"
+          version_code="$(awk -F"'" '/^package: / { print $4; exit }' <<< "$badging")"
+          version_name="$(awk -F"'" '/^package: / { print $6; exit }' <<< "$badging")"
+          test "$package" = app.smarttube.l1.beta
+          test "$version_code" = "$((2462 + GITHUB_RUN_NUMBER))"
+          test -n "$version_name"
+          grep -Eq "^native-code: 'armeabi-v7a'[[:space:]]*$" <<< "$badging"
+          {
+            echo "path=$apk"
+            echo "version_code=$version_code"
+            echo "version_name=$version_name"
+          } >> "$GITHUB_OUTPUT"
+          echo "CI versionCode: $version_code" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload ARMv7 APK only
         uses: actions/upload-artifact@v5
         with:
           name: SmartTube-L1-ARMv7
-          path: smarttubetv/build/outputs/apk/**/*armeabi-v7a.apk
+          path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 7
 
-      - name: Publish direct APK download in GitHub Releases
+      - name: Publish the APK and update manifest in GitHub Releases
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          VERSION_CODE: ${{ steps.apk.outputs.version_code }}
+          VERSION_NAME: ${{ steps.apk.outputs.version_name }}
         run: |
           set -euo pipefail
-          mapfile -t apks < <(find smarttubetv/build/outputs/apk -type f -name '*armeabi-v7a.apk')
-          if [ "${#apks[@]}" -ne 1 ]; then
-            echo "::error::Expected exactly one ARMv7 APK, found ${#apks[@]}"
-            exit 1
-          fi
           tag="l1-armv7-build-${GITHUB_RUN_NUMBER}"
-          cp "${apks[0]}" SmartTube-L1-ARMv7.apk
-          gh release create "$tag" SmartTube-L1-ARMv7.apk \
+          latest="$(gh release list --exclude-drafts --exclude-pre-releases --limit 100 \
+            --json tagName,isLatest --jq '.[] | select(.isLatest) | .tagName')"
+          if [[ "$latest" =~ ^l1-armv7-build-([0-9]+)$ ]] && (( BASH_REMATCH[1] >= GITHUB_RUN_NUMBER )); then
+            echo "The published update is already at or above build ${GITHUB_RUN_NUMBER}."
+            exit 0
+          fi
+
+          apk_url="https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/SmartTube-L1-ARMv7.apk"
+          cp "$APK_PATH" SmartTube-L1-ARMv7.apk
+          jq -n --arg url "$apk_url" --arg version "$VERSION_NAME · build ${GITHUB_RUN_NUMBER}" \
+            --argjson code "$VERSION_CODE" \
+            '{package: {downloadUrl: $url}, ($version): {versionCode: $code, changelog: ["SmartTube-L1 ARMv7 update"], changelog_pt: ["Atualização do SmartTube-L1 para ARMv7"]}}' \
+            > smarttube-l1-update.json
+
+          gh release create "$tag" SmartTube-L1-ARMv7.apk smarttube-l1-update.json \
             --repo "$GITHUB_REPOSITORY" \
-            --target helium-enhanced \
-            --title "SmartTube-L1 ARMv7 test build ${GITHUB_RUN_NUMBER}" \
-            --notes "Automated ARMv7 debug test APK from helium-enhanced. Experimental audio selection and diagnostics; validate on TV." \
-            --prerelease
-          echo "Direct APK: https://github.com/$GITHUB_REPOSITORY/releases/download/$tag/SmartTube-L1-ARMv7.apk" >> "$GITHUB_STEP_SUMMARY"
+            --target "$(git rev-parse HEAD)" \
+            --title "SmartTube-L1 ARMv7 · build ${GITHUB_RUN_NUMBER}" \
+            --notes "Signed SmartTube-L1 APK for Android TV (armeabi-v7a). This release also supplies the app's update manifest." \
+            --latest
+          echo "Direct APK: $apk_url" >> "$GITHUB_STEP_SUMMARY"

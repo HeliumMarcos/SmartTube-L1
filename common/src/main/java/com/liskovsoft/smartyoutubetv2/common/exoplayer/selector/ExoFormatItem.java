@@ -39,14 +39,23 @@ public class ExoFormatItem implements FormatItem {
     private boolean mIsDrc;
 
     public static List<FormatItem> from(Set<MediaTrack> mediaTracks) {
+        return from(mediaTracks, null);
+    }
+
+    public static List<FormatItem> from(Set<MediaTrack> mediaTracks, Format activeFormat) {
         if (mediaTracks == null) {
             return null;
         }
 
         List<FormatItem> formats = new ArrayList<>();
+        ExoFormatItem active = activeFormat != null ? from(activeFormat) : null;
 
         for (MediaTrack track : mediaTracks) {
-            formats.add(from(track));
+            ExoFormatItem item = from(track);
+            if (active != null) {
+                item.mIsSelected = track.format != null && item.equals(active);
+            }
+            formats.add(item);
         }
 
         return formats;

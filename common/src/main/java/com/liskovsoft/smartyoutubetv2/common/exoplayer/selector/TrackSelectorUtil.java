@@ -203,18 +203,22 @@ public class TrackSelectorUtil {
     }
 
     public static String buildChannels(Format format) {
+        return buildChannels(format, false);
+    }
+
+    public static String buildChannels(Format format, boolean compact) {
         if (format == null || format.channelCount == Format.NO_VALUE || format.channelCount <= 0) {
             return "canais não informados";
         }
         switch (format.channelCount) {
-            case 1: return "1.0 mono";
-            case 2: return "2.0 estéreo";
+            case 1: return compact ? "1.0" : "1.0 mono";
+            case 2: return compact ? "2.0" : "2.0 estéreo";
             case 3: return "3.0";
-            case 4: return "4.0 surround";
-            case 5: return "5.0 surround";
-            case 6: return "5.1 surround";
-            case 7: return "6.1 surround";
-            case 8: return "7.1 surround";
+            case 4: return compact ? "4.0" : "4.0 surround";
+            case 5: return compact ? "5.0" : "5.0 surround";
+            case 6: return compact ? "5.1" : "5.1 surround";
+            case 7: return compact ? "6.1" : "6.1 surround";
+            case 8: return compact ? "7.1" : "7.1 surround";
             default: return format.channelCount + " canais";
         }
     }
@@ -312,7 +316,7 @@ public class TrackSelectorUtil {
             return null;
         }
 
-        return labels.first != null ? labels.first : labels.second;
+        return labels.first != null ? labels.first : labels.second + "p";
     }
 
     private static int getOriginHeight(int height) {
@@ -442,19 +446,23 @@ public class TrackSelectorUtil {
     }
 
     public static String buildAudioCodecLabel(Format format) {
+        return buildAudioCodecLabel(format, false);
+    }
+
+    public static String buildAudioCodecLabel(Format format, boolean compact) {
         if (format == null) {
-            return "Áudio";
+            return compact ? "" : "Áudio";
         }
         String mime = format.sampleMimeType == null ? "" : format.sampleMimeType.toLowerCase(java.util.Locale.US);
         String codec = format.codecs == null ? "" : format.codecs.toLowerCase(java.util.Locale.US);
         if (mime.equals("audio/eac3-joc") || codec.contains("ec+3")) {
-            return "Dolby Digital Plus (Atmos)";
+            return compact ? "DD+ Atmos" : "Dolby Digital Plus (Atmos)";
         }
         if (mime.equals("audio/eac3") || codec.contains("ec-3")) {
-            return "Dolby Digital Plus";
+            return compact ? "DD+" : "Dolby Digital Plus";
         }
         if (mime.equals("audio/ac3") || codec.contains("ac-3")) {
-            return "Dolby Digital";
+            return compact ? "DD" : "Dolby Digital";
         }
         if (mime.equals("audio/mp4a-latm") || codec.startsWith("mp4a")) {
             return "AAC";
@@ -475,7 +483,8 @@ public class TrackSelectorUtil {
             return "Dolby TrueHD";
         }
         String shortCodec = extractCodec(format);
-        return shortCodec == null || shortCodec.isEmpty() ? "Áudio" : shortCodec.toUpperCase(java.util.Locale.US);
+        return shortCodec == null || shortCodec.isEmpty()
+                ? (compact ? "" : "Áudio") : shortCodec.toUpperCase(java.util.Locale.US);
     }
 
     /**
@@ -515,7 +524,7 @@ public class TrackSelectorUtil {
                 return "HLG";
             }
         }
-        return isHdrFormat(format) ? "HDR" : "";
+        return isHdrFormat(format) || isHdrCodec(format.codecs) ? "HDR" : "";
     }
 
     public static String buildVideoCodecLabel(Format format) {

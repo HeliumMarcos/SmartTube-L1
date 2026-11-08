@@ -769,4 +769,6 @@
     <string name="audio_preset_ac3">Dolby Digital (AC-3)</string>
     <string name="audio_preset_aac">AAC</string>
     <string name="audio_preset_opus">Opus</string>
+    <string name="playback_audio_label">Audio</string>
+    <string name="playback_channels_unknown">channels unknown</string>
 </resources>

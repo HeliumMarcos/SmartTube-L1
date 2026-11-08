@@ -115,6 +115,8 @@
                             android:layoutDirection="ltr"
                             android:layout_gravity="bottom"
                             android:layout_alignParentEnd="true"
+                            android:layout_toEndOf="@id/controls_dock"
+                            android:layout_marginStart="8dp"
                             android:layout_centerVertical="true"
                             android:focusable="false" >
                 <TextView
@@ -122,6 +124,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
+                    android:gravity="end"
                     style="?attr/playbackControlsTimeStyle" />
                 <com.liskovsoft.smartyoutubetv2.tv.ui.widgets.time.DateTimeView
                     android:id="@+id/date_time"

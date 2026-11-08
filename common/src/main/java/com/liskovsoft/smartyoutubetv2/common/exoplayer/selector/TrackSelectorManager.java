@@ -690,16 +690,7 @@ public class TrackSelectorManager implements TrackSelectorCallback {
      * comparable at equal Mbps. ExoPlayer still handles buffering and errors.
      */
     public static int compareAutomaticVideo(Format left, Format right) {
-        int a = TrackSelectorUtil.getRealHeight(left);
-        int b = TrackSelectorUtil.getRealHeight(right);
-        int cmp = Integer.compare(a, b);
-        if (cmp != 0) return cmp;
-
-        cmp = Boolean.compare(isAutomaticHdr(left), isAutomaticHdr(right));
-        if (cmp != 0) return cmp;
-
-        cmp = Float.compare(left.frameRate > 0 ? left.frameRate : 0,
-                right.frameRate > 0 ? right.frameRate : 0);
+        int cmp = compareAutomaticVideoQuality(left, right);
         if (cmp != 0) return cmp;
 
         // Bitrates from different codecs are not equivalent. However, a
@@ -707,23 +698,29 @@ public class TrackSelectorManager implements TrackSelectorCallback {
         // Avoid declaring an AV1 encode superior solely by its codec name.
         int leftBitrate = Math.max(0, left.bitrate);
         int rightBitrate = Math.max(0, right.bitrate);
-        if (leftBitrate > 0 && rightBitrate > 0) {
-            long high = Math.max(leftBitrate, rightBitrate);
-            long low = Math.min(leftBitrate, rightBitrate);
-            if (high * 100L >= low * 150L) {
-                return Integer.compare(leftBitrate, rightBitrate);
-            }
+        if (hasSubstantialVideoBitrateAdvantage(leftBitrate, rightBitrate)
+                || hasSubstantialVideoBitrateAdvantage(rightBitrate, leftBitrate)) {
+            return Integer.compare(leftBitrate, rightBitrate);
         }
         cmp = Integer.compare(automaticVideoCodecRank(left), automaticVideoCodecRank(right));
         if (cmp != 0) return cmp;
         return Integer.compare(leftBitrate, rightBitrate);
     }
 
-    private static boolean isAutomaticHdr(Format format) {
-        return format.colorInfo != null
-                && (format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_ST2084
-                || format.colorInfo.colorTransfer == com.google.android.exoplayer2.C.COLOR_TRANSFER_HLG)
-                || TrackSelectorUtil.isHdrFormat(format);
+    public static int compareAutomaticVideoQuality(Format left, Format right) {
+        int cmp = Integer.compare(TrackSelectorUtil.getRealHeight(left), TrackSelectorUtil.getRealHeight(right));
+        if (cmp != 0) return cmp;
+
+        cmp = Boolean.compare(!TrackSelectorUtil.buildVideoHdrLabel(left).isEmpty(),
+                !TrackSelectorUtil.buildVideoHdrLabel(right).isEmpty());
+        if (cmp != 0) return cmp;
+
+        return Float.compare(left.frameRate > 0 ? left.frameRate : 0,
+                right.frameRate > 0 ? right.frameRate : 0);
+    }
+
+    public static boolean hasSubstantialVideoBitrateAdvantage(int higher, int lower) {
+        return lower > 0 && higher * 2L >= lower * 3L;
     }
 
     private static int automaticVideoCodecRank(Format format) {

@@ -338,7 +338,7 @@ public class AppDialogUtil {
         result.add(0, UiOptionItem.from(
                 context.getString(R.string.video_preset_auto),
                 optionItem -> setFormat(playerData.getDefaultVideoFormat(), playerData, onFormatSelected),
-                !isPresetSelection));
+                playerData.getDefaultVideoFormat().equals(selectedFormat)));
 
         return result;
     }

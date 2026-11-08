@@ -3,14 +3,20 @@ package com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.selector;
 import android.util.Pair;
 import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.RendererCapabilities;
+import com.google.android.exoplayer2.source.TrackGroup;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection.Definition;
 import com.google.android.exoplayer2.trackselection.TrackSelection.Factory;
+import com.google.android.exoplayer2.util.Util;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorUtil;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.track.MediaTrack;
+
+import java.util.Arrays;
 
 public class RestoreTrackSelector extends DefaultTrackSelector {
     private static final String TAG = RestoreTrackSelector.class.getSimpleName();
@@ -125,24 +131,11 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
     @Override
     protected Definition selectVideoTrack(TrackGroupArray groups, int[][] formatSupports, int mixedMimeTypeAdaptationSupports,
                                               Parameters params, boolean enableAdaptiveTrackSelection) throws ExoPlaybackException {
-        // Automatic video must remain adaptive; custom single-track definitions
-        // would prevent bandwidth-driven quality switching.
-        if (mCallback instanceof com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager
-                && ((com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorManager) mCallback)
-                        .isAutomaticVideoSelection()) {
-            Log.d(TAG, "selectVideoTrack: ExoPlayer adaptive automatic quality");
-            Definition adaptive = selectQualityAdaptiveVideo(groups, formatSupports,
-                    params, enableAdaptiveTrackSelection);
-            if (adaptive != null) {
-                return adaptive;
-            }
-            // Do not fall back to ExoPlayer's unrestricted adaptive ladder:
-            // it can mix FPS/HDR variants that our safety filter rejected.
-            // A supported fixed format is safer than unexpected mode switches.
-            Definition safeFixed = selectQualityFixedVideo(groups, formatSupports, params);
-            if (safeFixed != null) {
-                Log.d(TAG, "selectVideoTrack: safe fixed quality fallback (no same-FPS/HDR ladder)");
-                return safeFixed;
+        if (mCallback instanceof TrackSelectorManager
+                && ((TrackSelectorManager) mCallback).isAutomaticVideoSelection()) {
+            Definition quality = selectAutomaticVideo(groups, formatSupports, params, enableAdaptiveTrackSelection);
+            if (quality != null) {
+                return quality;
             }
             return super.selectVideoTrack(groups, formatSupports,
                     mixedMimeTypeAdaptationSupports, params, false);
@@ -171,115 +164,94 @@ public class RestoreTrackSelector extends DefaultTrackSelector {
         return definition;
     }
 
-    /**
-     * Prefer the best quality ladder among renderer-confirmed video formats.
-     * FORMAT_HANDLED is supplied by the actual renderer's codec/profile/level
-     * support check, rather than assuming all AV1/HDR profiles are playable.
-     * Keep only seamlessly adaptive formats of the same MIME type and HDR
-     * transfer characteristic to avoid disruptive decoder/color-mode changes.
-     */
+    // Rank all playable formats before looking for adaptive alternatives.
+    // A better standalone track must not lose to a lower-quality ladder.
     @Nullable
-    private Definition selectQualityAdaptiveVideo(TrackGroupArray groups, int[][] support,
+    static Definition selectAutomaticVideo(TrackGroupArray groups, int[][] support,
             Parameters params, boolean adaptiveEnabled) {
-        if (!adaptiveEnabled || params.forceHighestSupportedBitrate || params.forceLowestBitrate) {
+        Format bestFormat = null;
+        int bestGroup = -1;
+        int bestTrack = -1;
+        for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
+            TrackGroup group = groups.get(groupIndex);
+            for (int track = 0; track < group.length; track++) {
+                Format format = group.getFormat(track);
+                if (!isPlayableVideo(format, support[groupIndex][track], params)) {
+                    continue;
+                }
+                int quality = bestFormat == null ? 1 : TrackSelectorManager.compareAutomaticVideoQuality(format, bestFormat);
+                if (quality > 0 || (quality == 0 && format.bitrate > bestFormat.bitrate)) {
+                    bestFormat = format;
+                    bestGroup = groupIndex;
+                    bestTrack = track;
+                }
+            }
+        }
+
+        if (bestFormat == null) {
             return null;
         }
-        Definition best = null;
-        com.google.android.exoplayer2.Format bestTop = null;
-        for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-            com.google.android.exoplayer2.source.TrackGroup group = groups.get(groupIndex);
-            for (int topIndex = 0; topIndex < group.length; topIndex++) {
-                com.google.android.exoplayer2.Format top = group.getFormat(topIndex);
-                if ((support[groupIndex][topIndex] & RendererCapabilities.FORMAT_SUPPORT_MASK)
-                        != RendererCapabilities.FORMAT_HANDLED
-                        || top.width > params.maxVideoWidth || top.height > params.maxVideoHeight
-                        || (top.frameRate > 0 && top.frameRate > params.maxVideoFrameRate)
-                        || (top.bitrate > 0 && top.bitrate > params.maxVideoBitrate)) {
-                    continue;
-                }
-                java.util.ArrayList<Integer> indices = new java.util.ArrayList<>();
-                for (int j = 0; j < group.length; j++) {
-                    com.google.android.exoplayer2.Format other = group.getFormat(j);
-                    if ((support[groupIndex][j] & RendererCapabilities.FORMAT_SUPPORT_MASK)
-                            != RendererCapabilities.FORMAT_HANDLED
-                            || (support[groupIndex][j] & RendererCapabilities.ADAPTIVE_SEAMLESS) == 0
-                            || !android.text.TextUtils.equals(top.sampleMimeType, other.sampleMimeType)
-                            || !sameHdrTransfer(top, other)
-                            || !sameContentFrameRate(top, other)
-                            || other.width > params.maxVideoWidth || other.height > params.maxVideoHeight
-                            || (other.frameRate > 0 && other.frameRate > params.maxVideoFrameRate)
-                            || (other.bitrate > 0 && other.bitrate > params.maxVideoBitrate)) {
-                        continue;
-                    }
-                    indices.add(j);
-                }
-                if (indices.size() < 2) continue;
-                if (bestTop == null || TrackSelectorManager.compareAutomaticVideo(top, bestTop) > 0) {
-                    int[] tracks = new int[indices.size()];
-                    for (int j = 0; j < tracks.length; j++) tracks[j] = indices.get(j);
-                    best = new Definition(group, tracks);
-                    bestTop = top;
-                }
-            }
-        }
-        if (best != null) {
-            Log.d(TAG, "Quality adaptive ladder: " + best.tracks.length
-                    + " renderer-supported same-FPS variants, best=" + bestTop);
-        }
-        return best;
-    }
 
-    /**
-     * Keep adaptive variants in the same source frame-rate family.
-     * 23.976/24, 29.97/30 and 59.94/60 are equivalent, but 24/30/60
-     * must not be mixed during bandwidth-driven quality changes.
-     * Unknown frame rates are only grouped with other unknown rates.
-     */
-    /**
-     * Fallback when no safe adaptive ladder exists. Select only a format the
-     * renderer reports as handled; never switch between incompatible HDR/FPS
-     * variants to manufacture an adaptive ladder.
-     */
-    @Nullable
-    private Definition selectQualityFixedVideo(TrackGroupArray groups, int[][] support,
-            Parameters params) {
-        com.google.android.exoplayer2.Format bestFormat = null;
-        Definition bestDefinition = null;
+        // Apply the bitrate threshold against the strongest bitrate in the
+        // winning resolution/HDR/FPS tier, regardless of manifest order.
+        Format highestBitrate = bestFormat;
         for (int groupIndex = 0; groupIndex < groups.length; groupIndex++) {
-            com.google.android.exoplayer2.source.TrackGroup group = groups.get(groupIndex);
-            for (int j = 0; j < group.length; j++) {
-                com.google.android.exoplayer2.Format format = group.getFormat(j);
-                if ((support[groupIndex][j] & RendererCapabilities.FORMAT_SUPPORT_MASK)
-                        != RendererCapabilities.FORMAT_HANDLED
-                        || format.width > params.maxVideoWidth
-                        || format.height > params.maxVideoHeight
-                        || (format.frameRate > 0 && format.frameRate > params.maxVideoFrameRate)
-                        || (format.bitrate > 0 && format.bitrate > params.maxVideoBitrate)) {
-                    continue;
-                }
-                if (bestFormat == null
-                        || TrackSelectorManager.compareAutomaticVideo(format, bestFormat) > 0) {
+            TrackGroup group = groups.get(groupIndex);
+            for (int track = 0; track < group.length; track++) {
+                Format format = group.getFormat(track);
+                if (isPlayableVideo(format, support[groupIndex][track], params)
+                        && TrackSelectorManager.compareAutomaticVideoQuality(format, highestBitrate) == 0
+                        && !TrackSelectorManager.hasSubstantialVideoBitrateAdvantage(highestBitrate.bitrate, format.bitrate)
+                        && TrackSelectorManager.compareAutomaticVideo(format, bestFormat) > 0) {
                     bestFormat = format;
-                    bestDefinition = new Definition(group, j);
+                    bestGroup = groupIndex;
+                    bestTrack = track;
                 }
             }
         }
-        return bestDefinition;
+
+        TrackGroup group = groups.get(bestGroup);
+        int[] groupSupport = support[bestGroup];
+        if (!adaptiveEnabled || params.forceHighestSupportedBitrate || params.forceLowestBitrate
+                || (groupSupport[bestTrack] & RendererCapabilities.ADAPTIVE_SEAMLESS) == 0) {
+            return new Definition(group, bestTrack);
+        }
+
+        int[] compatibleTracks = new int[group.length];
+        int count = 0;
+        for (int track = 0; track < group.length; track++) {
+            Format format = group.getFormat(track);
+            if ((groupSupport[track] & RendererCapabilities.ADAPTIVE_SEAMLESS) != 0
+                    && isPlayableVideo(format, groupSupport[track], params)
+                    && Util.areEqual(bestFormat.sampleMimeType, format.sampleMimeType)
+                    && sameHdrTransfer(bestFormat, format)
+                    && sameContentFrameRate(bestFormat, format)) {
+                compatibleTracks[count++] = track;
+            }
+        }
+
+        return new Definition(group, Arrays.copyOf(compatibleTracks, count));
     }
 
-    private static boolean sameContentFrameRate(com.google.android.exoplayer2.Format a,
-            com.google.android.exoplayer2.Format b) {
+    private static boolean isPlayableVideo(Format format, int support, Parameters params) {
+        return (support & RendererCapabilities.FORMAT_SUPPORT_MASK) == RendererCapabilities.FORMAT_HANDLED
+                && format.width <= params.maxVideoWidth && format.height <= params.maxVideoHeight
+                && (format.frameRate <= 0 || format.frameRate <= params.maxVideoFrameRate)
+                && (format.bitrate <= 0 || format.bitrate <= params.maxVideoBitrate);
+    }
+
+    // Treat 23.976/24 and 29.97/30 as the same family during bandwidth changes.
+    private static boolean sameContentFrameRate(Format a, Format b) {
         if (a.frameRate <= 0 || b.frameRate <= 0) {
             return a.frameRate <= 0 && b.frameRate <= 0;
         }
         return Math.abs(a.frameRate - b.frameRate) <= 0.6f;
     }
 
-    private static boolean sameHdrTransfer(com.google.android.exoplayer2.Format a,
-            com.google.android.exoplayer2.Format b) {
+    private static boolean sameHdrTransfer(Format a, Format b) {
         int at = a.colorInfo == null ? -1 : a.colorInfo.colorTransfer;
         int bt = b.colorInfo == null ? -1 : b.colorInfo.colorTransfer;
-        return at == bt;
+        return at == bt && TrackSelectorUtil.buildVideoHdrLabel(a).equals(TrackSelectorUtil.buildVideoHdrLabel(b));
     }
 
     // Exo 2.10 and up

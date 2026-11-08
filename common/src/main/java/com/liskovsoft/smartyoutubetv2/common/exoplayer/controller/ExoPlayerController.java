@@ -10,6 +10,8 @@ import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
+import com.google.android.exoplayer2.audio.AudioRendererEventListener;
+import com.google.android.exoplayer2.decoder.DecoderCounters;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MergingMediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
@@ -18,6 +20,7 @@ import com.google.android.exoplayer2.source.sabr.manifest.SabrManifest;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.video.VideoRendererEventListener;
 import com.liskovsoft.mediaserviceinterfaces.data.MediaItemFormatInfo;
 import com.liskovsoft.sharedutils.mylogger.Log;
 import com.liskovsoft.smartyoutubetv2.common.BuildConfig;
@@ -44,7 +47,8 @@ import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ExoPlayerController implements Player.EventListener, LiveStateProvider {
+public class ExoPlayerController implements Player.EventListener, VideoRendererEventListener,
+        AudioRendererEventListener, LiveStateProvider {
     private static final String TAG = ExoPlayerController.class.getSimpleName();
     /** How far from the live edge (in segments) the playback is considered to be on the edge */
     private static final int SABR_LIVE_EDGE_TOLERANCE_SEGMENTS = 4;
@@ -75,7 +79,7 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
         mContext = context.getApplicationContext();
         mTrackSelectorManager = new TrackSelectorManager(context);
         mMediaSourceFactory = new ExoMediaSourceFactory(context);
-        mTrackFormatter = new TrackInfoFormatter2();
+        mTrackFormatter = new TrackInfoFormatter2(context);
         mTrackFormatter.enableBitrate(PlayerTweaksData.instance(context).isQualityInfoBitrateEnabled());
 
         mMediaSourceFactory.setTrackErrorFixer(new TrackErrorFixer(mTrackSelectorManager));
@@ -179,6 +183,8 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
         mSabrLiveSeekBlocked = false;
         mSabrLiveStartPending = false;
         resetPlayerState(); // fixes occasional video artifacts and problems with quality switching
+        mTrackFormatter.setVideoFormat(null);
+        mTrackFormatter.setAudioFormat(null);
         setQualityInfo("");
 
         mTrackSelectorManager.setMergedSource(mediaSource instanceof MergingMediaSource);
@@ -289,6 +295,8 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
     public void setPlayer(SimpleExoPlayer player) {
         mPlayer = player;
         player.addListener(this);
+        player.addVideoDebugListener(this);
+        player.addAudioDebugListener(this);
     }
 
     //@Override
@@ -320,11 +328,11 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
     }
     
     public List<FormatItem> getVideoFormats() {
-        return ExoFormatItem.from(mTrackSelectorManager.getVideoTracks());
+        return ExoFormatItem.from(mTrackSelectorManager.getVideoTracks(), mPlayer != null ? mPlayer.getVideoFormat() : null);
     }
     
     public List<FormatItem> getAudioFormats() {
-        return ExoFormatItem.from(mTrackSelectorManager.getAudioTracks());
+        return ExoFormatItem.from(mTrackSelectorManager.getAudioTracks(), mPlayer != null ? mPlayer.getAudioFormat() : null);
     }
     
     public List<FormatItem> getSubtitleFormats() {
@@ -370,23 +378,35 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
 
         for (TrackSelection selection : trackSelections.getAll()) {
             if (selection != null) {
-                // EXO: 2.12.1
-                //Format format = selection.getSelectedFormat();
-
-                // EXO: 2.13.1
-                Format format = selection.getFormat(0);
-
-                mEventListener.onTrackChanged(ExoFormatItem.from(format));
-
-                mTrackFormatter.setFormat(format);
+                mEventListener.onTrackChanged(ExoFormatItem.from(selection.getSelectedFormat()));
             }
         }
         
-        setQualityInfo(mTrackFormatter.getQualityLabel());
-
         // Manage audio focus. E.g. use Spotify when audio is disabled. (NOT NEEDED!!!)
         //MediaTrack audioTrack = mTrackSelectorManager.getAudioTrack();
         //ExoPlayerInitializer.enableAudioFocus(mPlayer, audioTrack != null && !audioTrack.isEmpty());
+    }
+
+    @Override
+    public void onVideoInputFormatChanged(Format format) {
+        mTrackFormatter.setVideoFormat(format);
+        setQualityInfo(mTrackFormatter.getQualityLabel());
+    }
+
+    @Override
+    public void onAudioInputFormatChanged(Format format) {
+        mTrackFormatter.setAudioFormat(format);
+        setQualityInfo(mTrackFormatter.getQualityLabel());
+    }
+
+    @Override
+    public void onVideoDisabled(DecoderCounters counters) {
+        onVideoInputFormatChanged(null);
+    }
+
+    @Override
+    public void onAudioDisabled(DecoderCounters counters) {
+        onAudioInputFormatChanged(null);
     }
 
     private void notifyOnVideoLoad() {
@@ -631,6 +651,8 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
 
         try {
             mPlayer.removeListener(this);
+            mPlayer.removeVideoDebugListener(this);
+            mPlayer.removeAudioDebugListener(this);
             mPlayer.stop(true); // Cause input lags due to high cpu load?
             mPlayer.clearVideoSurface();
             mPlayer.release();
@@ -638,6 +660,8 @@ public class ExoPlayerController implements Player.EventListener, LiveStateProvi
             e.printStackTrace();
         } finally {
             mPlayer = null;
+            mTrackFormatter.setVideoFormat(null);
+            mTrackFormatter.setAudioFormat(null);
         }
     }
 

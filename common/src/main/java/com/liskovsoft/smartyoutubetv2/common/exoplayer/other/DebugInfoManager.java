@@ -36,6 +36,7 @@ import com.liskovsoft.sharedutils.querystringparser.UrlQueryStringFactory;
 import com.liskovsoft.smartyoutubetv2.common.R;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.DisplayHolder.Mode;
 import com.liskovsoft.smartyoutubetv2.common.autoframerate.internal.UhdHelper;
+import com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackInfoFormatter2;
 import com.liskovsoft.smartyoutubetv2.common.exoplayer.versions.ExoUtils;
 import com.liskovsoft.smartyoutubetv2.common.misc.MediaServiceManager;
 import com.liskovsoft.smartyoutubetv2.common.prefs.AppPrefs;
@@ -48,7 +49,6 @@ import com.liskovsoft.youtubeapi.service.internal.MediaServiceData;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 // NOTE: original file taken from
 // https://github.com/google/ExoPlayer/blob/release-v2/library/ui/src/main/java/com/google/android/exoplayer2/ui/DebugTextViewHelper.java
@@ -76,6 +76,9 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
     private final List<Pair<String, String>> mDisplayModeId = new ArrayList<>();
     private final List<Pair<String, String>> mDisplayInfo = new ArrayList<>();
     private final String mAppVersion;
+    private final String mVideoLabel;
+    private final String mAudioLabel;
+    private final String mUnknownChannels;
 
     /**
      * @param debugViewGroup The container that should be updated to display the information.
@@ -89,6 +92,9 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         mPlayerInitializer = playerInitializer;
         mTextSize = mContext.getResources().getDimension(R.dimen.debug_text_size);
         mAppVersion = String.format("%s version", mContext.getString(R.string.app_name));
+        mVideoLabel = mContext.getString(R.string.settings_video);
+        mAudioLabel = mContext.getString(R.string.playback_audio_label);
+        mUnknownChannels = mContext.getString(R.string.playback_channels_unknown);
         inflate();
     }
 
@@ -239,38 +245,29 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
 
         Format video = mPlayer.getVideoFormat();
         Format audio = mPlayer.getAudioFormat();
-        if (video == null || audio == null) {
+        if (video == null && audio == null) {
             return;
         }
 
-        String videoRes = getVideoResolution(video);
+        if (video != null) {
+            mVideoInfo.add(new Pair<>(mVideoLabel, TrackInfoFormatter2.buildVideoDetails(video, true)));
+        }
+        if (audio != null) {
+            mVideoInfo.add(new Pair<>(mAudioLabel, TrackInfoFormatter2.buildAudioDetails(audio, mUnknownChannels, true)));
+            mVideoInfo.add(new Pair<>("Audio sample rate", audio.sampleRate > 0
+                    ? audio.sampleRate + " Hz" : NOT_AVAILABLE));
+            mVideoInfo.add(new Pair<>("Audio language", audio.language != null ? audio.language : NOT_AVAILABLE));
+            mVideoInfo.add(new Pair<>("Audio output", "Not verified (PCM / passthrough unknown)"));
+        }
 
-        mVideoInfo.add(new Pair<>("Video resolution", videoRes));
-        mVideoInfo.add(new Pair<>("Video/Audio codecs", String.format(
-                "%s(%s)/%s(%s)",
-                getFormatMimeType(video),
-                getFormatId(video),
-                getFormatMimeType(audio),
-                getFormatId(audio)
-        )));
-        mVideoInfo.add(new Pair<>("Video/Audio bitrate", String.format(
-                "%s/%s",
-                toHumanReadable(video.bitrate),
-                toHumanReadable(audio.bitrate)
-        )));
-        // Report the active ExoPlayer audio format, not an assumed HDMI output.
-        mVideoInfo.add(new Pair<>("Audio codec", audio.codecs != null
-                ? audio.codecs : getFormatMimeType(audio)));
-        mVideoInfo.add(new Pair<>("Audio channels", audio.channelCount > 0
-                ? com.liskovsoft.smartyoutubetv2.common.exoplayer.selector.TrackSelectorUtil.buildChannels(audio)
-                : "unknown (not reported)"));
-        mVideoInfo.add(new Pair<>("Audio sample rate", audio.sampleRate > 0
-                ? audio.sampleRate + " Hz" : NOT_AVAILABLE));
-        mVideoInfo.add(new Pair<>("Audio bitrate", toHumanReadable(audio.bitrate)));
-        mVideoInfo.add(new Pair<>("Audio language", audio.language != null
-                ? audio.language : NOT_AVAILABLE));
-        mVideoInfo.add(new Pair<>("Audio DRC", String.valueOf(audio.isDrc)));
-        mVideoInfo.add(new Pair<>("Audio output", "Not verified (PCM / passthrough unknown)"));
+        mVideoInfo.add(new Pair<>("Video/Audio format", getFormatDetails(video) + " / " + getFormatDetails(audio)));
+        if (video == null) {
+            return;
+        }
+
+        if (video.width > 0 && video.height > 0) {
+            mVideoInfo.add(new Pair<>("Video resolution", video.width + "x" + video.height));
+        }
         // Aspect info is not valid since we're using custom views
         //String par = video.pixelWidthHeightRatio == Format.NO_VALUE ||
         //        video.pixelWidthHeightRatio == 1f ?
@@ -493,33 +490,12 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         return textView;
     }
 
-    private String toHumanReadable(int bitrate) {
-        if (bitrate < 0) {
+    private String getFormatDetails(Format format) {
+        if (format == null) {
             return NOT_AVAILABLE;
         }
-
-        float mbit = ((float) bitrate) / 1_000_000;
-        return String.format(Locale.ENGLISH, "%.2fMbps", mbit);
-    }
-
-    private String getFormatId(Format video) {
-        return video.id;
-    }
-
-    private String getFormatMimeType(Format video) {
-        if (video == null || video.sampleMimeType == null) {
-            return null;
-        }
-
-        return video.sampleMimeType.replace("video/", "").replace("audio/", "");
-    }
-
-    private String getVideoResolution(Format video) {
-        String result = video.width + "x" + video.height;
-        if (video.frameRate > 0) {
-            result += "@" + ((int) video.frameRate);
-        }
-        return result;
+        String codec = format.codecs != null ? format.codecs : format.sampleMimeType;
+        return (codec != null ? codec : NOT_AVAILABLE) + (format.id != null ? " (" + format.id + ")" : "");
     }
 
     // NOTE: Be aware. This info isn't real! It's like caps or something like that. To get real info use method below.

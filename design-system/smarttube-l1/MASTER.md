@@ -16,6 +16,12 @@ Padrão visual aprovado para a evolução do SmartTube-L1 em Android TV. O menu 
 
 Os recursos ficam em `smarttubetv/src/main/res/values/l1_theme.xml`. Reutilize os recursos pelo seu papel na interface. Reserve o coral para foco, confirmação e outros destaques pontuais.
 
+## Identidade no launcher
+
+- O nome exibido é **SmartTube-L1**.
+- A marca é um triângulo de reprodução azul em relevo com o monograma **L1** branco dentro dele. Centralize a marca na área segura do ícone adaptativo para os recortes do launcher.
+- O banner da TV usa a mesma marca sobre a superfície escura do tema e o sufixo **-L1** em azul.
+
 ## Forma e tipografia
 
 - Use superfícies escuras opacas, borda discreta de 1 dp e raio de 16 dp em painéis. Use raio de 8 dp em linhas e controles de menu.
