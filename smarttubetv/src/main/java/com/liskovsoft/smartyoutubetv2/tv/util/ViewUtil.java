@@ -186,8 +186,20 @@ public class ViewUtil {
                 ((AppDialogView) parent).getViewId() == R.id.playback_quality_dialog;
     }
 
-    public static void stylePlaybackQualityDialog(Fragment parent, View view) {
-        if (view == null || !isPlaybackQualityDialog(parent)) {
+    public static boolean isL1StyledDialog(Fragment parent) {
+        if (!(parent instanceof AppDialogView)) {
+            return false;
+        }
+        int id = ((AppDialogView) parent).getViewId();
+        return id == R.id.playback_quality_dialog || id == R.id.l1_speed_dialog;
+    }
+
+    /**
+     * Reusable TV-menu styling: panel, row focus, legibility, and spacing.
+     * Available to other dialogs as they are migrated, without changing their behavior.
+     */
+    public static void styleL1Dialog(Fragment parent, View view) {
+        if (view == null || !isL1StyledDialog(parent)) {
             return;
         }
 
