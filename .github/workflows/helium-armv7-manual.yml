@@ -1,5 +1,5 @@
 name: Helium ARMv7 APK (manual)
-# Rebuild requested after repository signing secrets were configured.
+# Rebuild requested after fixing premature Java class closure.
 
 on:
   workflow_dispatch:
