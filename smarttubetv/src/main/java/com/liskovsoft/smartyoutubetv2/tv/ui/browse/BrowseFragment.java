@@ -92,12 +92,15 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             SectionHeaderItem sectionHeader = (SectionHeaderItem) header;
             int iconId = sectionHeader.getResId();
             String iconUrl = sectionHeader.getIconUrl();
-            if (iconId <= 0 && (iconUrl == null || iconUrl.isEmpty())) continue;
+            // Keep the compact rail in exactly the same order as expanded headers.
+            // Iconless sections use a fallback instead of silently disappearing.
             ImageView icon = new ImageView(getContext());
             if (iconUrl != null && !iconUrl.isEmpty()) {
                 Glide.with(this).load(iconUrl).into(icon);
-            } else {
+            } else if (iconId > 0) {
                 icon.setImageResource(iconId);
+            } else {
+                icon.setImageResource(R.drawable.browse_title_account);
             }
             boolean active = i == getSelectedPosition();
             icon.setAlpha(active ? 1f : 0.68f);
