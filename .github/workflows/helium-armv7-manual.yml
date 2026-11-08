@@ -69,10 +69,10 @@ jobs:
           fi
           grep -Fq 'applicationId "app.smarttube.l1.beta"' smarttubetv/build.gradle
 
-      - name: Build ARMv7 debug APK
+      - name: Build signed ARMv7 release APK
         run: |
           chmod +x ./gradlew
-          ./gradlew :smarttubetv:assembleStbetaDebug --no-daemon
+          ./gradlew :smarttubetv:assembleStbetaRelease --no-daemon
 
       - name: Verify APK signature and update version
         id: apk
@@ -114,7 +114,7 @@ jobs:
           retention-days: 7
 
       - name: Publish the APK and update manifest in GitHub Releases
-        if: ${{ github.ref == 'refs/heads/helium-enhanced' }}
+        if: ${{ github.ref == 'refs/heads/helium-ui-modernization' }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
