@@ -47,6 +47,7 @@
     <string name="dialog_add_to_playlist">Adicionar/Remover da playlist</string>
     <string name="msg_signed_users_only">Apenas usuários logados</string>
     <string name="msg_cant_load_content">Não foi possível carregar o conteúdo.\n1) Verifique a data e a hora em seu dispositivo.\n2) Verifique a conexão de rede.\n3) Verifique suas configurações de proxy.\n4) Tente fazer login em sua conta.\n5) Talvez não haja nada de errado por aqui.</string>
+    <string name="video_preset_auto">Automático (recomendado)</string>
     <string name="title_video_presets">Predefinições de vídeo</string>
     <string name="settings_accounts">Contas</string>
     <string name="settings_left_panel">Editar categorias</string>
