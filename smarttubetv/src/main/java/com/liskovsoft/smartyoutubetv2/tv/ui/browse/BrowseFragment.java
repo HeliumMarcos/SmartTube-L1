@@ -69,7 +69,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
         }
         // Reserve actual layout space instead of drawing icons over video cards.
         if (mBrowseContentDock != null) {
-            mBrowseContentDock.setPaddingRelative(mOriginalContentPaddingStart + (visible ? navDp(72) : 0),
+            mBrowseContentDock.setPaddingRelative(mOriginalContentPaddingStart + (visible ? navDp(62) : 0),
                     mBrowseContentDock.getPaddingTop(),
                     mBrowseContentDock.getPaddingEnd(),
                     mBrowseContentDock.getPaddingBottom());
@@ -101,7 +101,11 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             }
             boolean active = i == getSelectedPosition();
             icon.setAlpha(active ? 1f : 0.68f);
-            icon.setBackgroundColor(active ? 0x443B9DE3 : 0x00000000);
+            android.graphics.drawable.GradientDrawable indicator = new android.graphics.drawable.GradientDrawable();
+            indicator.setColor(active ? 0xAA174A68 : 0x00000000);
+            indicator.setCornerRadius(navDp(9));
+            if (active) indicator.setStroke(navDp(2), 0xFF69BFFF);
+            icon.setBackground(indicator);
             icon.setFocusable(false);
             icon.setClickable(false);
             icon.setContentDescription(header.getName());
@@ -158,7 +162,7 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             mCompactNavigationRail.setOrientation(LinearLayout.VERTICAL);
             mCompactNavigationRail.setFocusable(false);
             mCompactNavigationRail.setClickable(false);
-            mCompactNavigationRail.setBackgroundColor(0xD91B2432);
+            mCompactNavigationRail.setBackgroundColor(0xF212171D);
             FrameLayout.LayoutParams railParams = new FrameLayout.LayoutParams(navDp(60), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.START | Gravity.CENTER_VERTICAL);
             ((FrameLayout) root).addView(mCompactNavigationRail, railParams);
             refreshCompactNavigationRail();
