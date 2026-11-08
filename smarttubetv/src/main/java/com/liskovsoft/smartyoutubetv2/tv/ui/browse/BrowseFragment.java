@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import com.bumptech.glide.Glide;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -73,11 +74,19 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             if (!(item instanceof PageRow)) continue;
             HeaderItem header = ((PageRow) item).getHeaderItem();
             if (!(header instanceof SectionHeaderItem)) continue;
-            int iconId = ((SectionHeaderItem) header).getResId();
-            if (iconId == 0) continue;
+            SectionHeaderItem sectionHeader = (SectionHeaderItem) header;
+            int iconId = sectionHeader.getResId();
+            String iconUrl = sectionHeader.getIconUrl();
+            if (iconId <= 0 && (iconUrl == null || iconUrl.isEmpty())) continue;
             ImageView icon = new ImageView(getContext());
-            icon.setImageResource(iconId);
-            icon.setAlpha(i == getSelectedPosition() ? 1f : 0.68f);
+            if (iconUrl != null && !iconUrl.isEmpty()) {
+                Glide.with(this).load(iconUrl).into(icon);
+            } else {
+                icon.setImageResource(iconId);
+            }
+            boolean active = i == getSelectedPosition();
+            icon.setAlpha(active ? 1f : 0.68f);
+            icon.setBackgroundColor(active ? 0x443B9DE3 : 0x00000000);
             icon.setFocusable(false);
             icon.setClickable(false);
             icon.setContentDescription(header.getName());
@@ -396,6 +405,9 @@ public class BrowseFragment extends BrowseSupportFragment implements BrowseView 
             // Need select again if current header is removed previously (can't check for it right now)
             // Fallback to the last section if index above size
             setSelectedPosition(index < mSectionRowAdapter.size() ? index : mSectionRowAdapter.size() - 1, false);
+            if (mCompactNavigationRail != null) {
+                mCompactNavigationRail.post(this::refreshCompactNavigationRail);
+            }
         }
     }
 
