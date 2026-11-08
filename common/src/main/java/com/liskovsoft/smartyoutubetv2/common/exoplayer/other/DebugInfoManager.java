@@ -71,6 +71,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
     private boolean mStarted;
     private LinearLayout column1;
     private LinearLayout column2;
+    private LinearLayout sectionsContainer;
     private UhdHelper mUhdHelper;
     private final List<Pair<String, String>> mVideoInfo = new ArrayList<>();
     private final List<Pair<String, String>> mDisplayModeId = new ArrayList<>();
@@ -102,8 +103,7 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         mDebugViewGroup.removeAllViews();
         LayoutInflater inflater = LayoutInflater.from(mContext);
         inflater.inflate(R.layout.debug_view, mDebugViewGroup, true);
-        column1 = mDebugViewGroup.findViewById(R.id.debug_view_column1);
-        column2 = mDebugViewGroup.findViewById(R.id.debug_view_column2);
+        sectionsContainer = mDebugViewGroup.findViewById(R.id.l1_debug_sections);
     }
 
     public void show(boolean show) {
@@ -203,29 +203,81 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
 
     @SuppressLint("SetTextI18n")
     private void updateAndPost() {
-        column1.removeAllViews();
-        column2.removeAllViews();
-
+        if (!mStarted || sectionsContainer == null) {
+            return;
+        }
+        // Keep the current scroll position while the live technical values refresh.
+        android.widget.ScrollView scroll = mDebugViewGroup.findViewById(R.id.l1_debug_scroll);
+        int scrollY = scroll != null ? scroll.getScrollY() : 0;
+        sectionsContainer.removeAllViews();
         updateRareChangedValues();
 
-        appendVideoInfo();
+        appendSection("Resumo rápido");
+        for (Pair<String, String> pair : mVideoInfo) {
+            if (mVideoLabel.equals(pair.first) || mAudioLabel.equals(pair.first)) {
+                appendRow(pair.first, pair.second);
+            }
+        }
+        appendSection("Vídeo");
+        appendVideoInfo(false);
         appendRuntimeInfo();
+
+        appendSection("Áudio");
+        appendVideoInfo(true);
+
+        appendSection("Rede / reprodução");
         appendPlayerState();
+        appendVersion();
+
+        appendSection("Display / dispositivo");
         appendDisplayInfo();
         appendDisplayModeId();
-        //appendPlayerWindowIndex();
-        appendVersion();
+
+        appendSection("App / diagnóstico");
         appendDeviceNameSDKCache();
         appendMemoryInfo();
-        //appendWebViewInfo();
-        //appendClientType();
         appendWebClientInfo();
         appendPlayerVersion();
         appendAccountInfo();
 
-        // Schedule next update
+        if (scroll != null && scrollY > 0) {
+            scroll.post(() -> {
+                if (mStarted) {
+                    scroll.scrollTo(0, scrollY);
+                }
+            });
+        }
         mDebugViewGroup.removeCallbacks(this);
         mDebugViewGroup.postDelayed(this, REFRESH_INTERVAL_MS);
+    }
+
+    private void appendSection(String title) {
+        LinearLayout card = new LinearLayout(mContext);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackgroundResource(R.drawable.l1_debug_card);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        int spacing = Math.round(mContext.getResources().getDisplayMetrics().density * 7);
+        cardParams.bottomMargin = spacing;
+        sectionsContainer.addView(card, cardParams);
+
+        TextView heading = createTextView(title);
+        heading.setTextColor(Color.parseColor("#FFB7B2"));
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        heading.setPadding(0, 0, 0, spacing);
+        card.addView(heading);
+
+        LinearLayout columns = new LinearLayout(mContext);
+        columns.setOrientation(LinearLayout.HORIZONTAL);
+        card.addView(columns, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        column1 = new LinearLayout(mContext);
+        column1.setOrientation(LinearLayout.VERTICAL);
+        columns.addView(column1, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        column2 = new LinearLayout(mContext);
+        column2.setOrientation(LinearLayout.VERTICAL);
+        columns.addView(column2, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1.5f));
     }
 
     private void updateRareChangedValues() {
@@ -234,9 +286,12 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
         updateDisplayInfo();
     }
 
-    private void appendVideoInfo() {
+    private void appendVideoInfo(boolean audio) {
         for (Pair<String, String> pair : mVideoInfo) {
-            appendRow(pair.first, pair.second);
+            boolean audioField = mAudioLabel.equals(pair.first) || pair.first.startsWith("Audio ");
+            if (audio == audioField && !mVideoLabel.equals(pair.first) && !mAudioLabel.equals(pair.first)) {
+                appendRow(pair.first, pair.second);
+            }
         }
     }
 
@@ -463,11 +518,13 @@ public final class DebugInfoManager implements Runnable, Player.EventListener {
     }
 
     private void appendNameColumn(TextView content) {
-        content.setGravity(Gravity.END);
+        content.setGravity(Gravity.START);
+        content.setTextColor(Color.parseColor("#BCC7D9"));
         column1.addView(content);
     }
 
     private void appendValueColumn(TextView content) {
+        content.setTextColor(Color.parseColor("#F4F6FC"));
         column2.addView(content);
     }
 
