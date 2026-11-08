@@ -3,6 +3,7 @@ package com.liskovsoft.smartyoutubetv2.tv.presenter;
 import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,8 +95,14 @@ public class IconHeaderItemPresenter extends RowHeaderPresenter {
     // mUnselectAlpha, and also assumes the xml inflation will return a RowHeaderView.
     @Override
     protected void onSelectLevelChanged(RowHeaderPresenter.ViewHolder holder) {
-        holder.view.setAlpha(mUnselectedAlpha + holder.getSelectLevel() *
-                (1.0f - mUnselectedAlpha));
+        boolean selected = holder.getSelectLevel() > 0.5f;
+        holder.view.setAlpha(selected ? 1.0f : 0.85f);
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(selected ? 0xAA174A68 : 0x00000000);
+        float density = holder.view.getResources().getDisplayMetrics().density;
+        background.setCornerRadius(10 * density);
+        if (selected) background.setStroke(Math.max(1, Math.round(2 * density)), 0xFF69BFFF);
+        holder.view.setBackground(background);
     }
 
     private final RequestListener<Drawable> mErrorListener = new RequestListener<Drawable>() {
