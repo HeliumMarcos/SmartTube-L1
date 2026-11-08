@@ -489,7 +489,7 @@ public class TrackSelectorUtil {
         String title = resolution == null || resolution.isEmpty() ? "Resolução desconhecida" : resolution;
         String hdr = buildVideoHdrLabel(format);
         if (!hdr.isEmpty()) {
-            title += " · " + hdr;
+            title += " • " + hdr;
         }
         String details = buildVideoCodecLabel(format);
         if (format.frameRate > 0) {
