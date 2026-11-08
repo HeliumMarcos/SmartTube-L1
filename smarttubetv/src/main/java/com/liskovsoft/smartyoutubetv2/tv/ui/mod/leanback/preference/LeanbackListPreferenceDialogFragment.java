@@ -211,7 +211,7 @@ public class LeanbackListPreferenceDialogFragment extends LeanbackPreferenceDial
             parent.removeView(verticalGridView);
         }
 
-        ViewUtil.stylePlaybackQualityDialog(getParentFragment(), view);
+        ViewUtil.styleL1Dialog(getParentFragment(), view);
         return view;
     }
 
