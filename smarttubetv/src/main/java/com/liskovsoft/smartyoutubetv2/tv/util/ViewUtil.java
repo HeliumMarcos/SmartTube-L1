@@ -244,6 +244,40 @@ public class ViewUtil {
         }
     }
 
+    /**
+     * Style an existing Leanback radio/checkbox row without replacing its click or
+     * checked-state handlers. Focus belongs to the inner item container.
+     */
+    public static void styleL1SelectionRow(View itemView) {
+        if (itemView == null) {
+            return;
+        }
+        Context context = itemView.getContext();
+        View container = itemView.findViewById(androidx.leanback.preference.R.id.container);
+        if (container == null) {
+            container = itemView;
+        }
+        container.setBackgroundResource(R.drawable.l1_menu_row);
+        container.setMinimumHeight(context.getResources().getDimensionPixelSize(R.dimen.l1_menu_row_min_height));
+
+        TextView title = itemView.findViewById(android.R.id.title);
+        if (title != null) {
+            title.setTextColor(ContextCompat.getColor(context, R.color.l1_text_primary));
+            title.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX,
+                    context.getResources().getDimensionPixelSize(R.dimen.l1_menu_row_text_size));
+        }
+
+        View button = itemView.findViewById(androidx.leanback.preference.R.id.button);
+        if (button instanceof android.widget.CompoundButton && android.os.Build.VERSION.SDK_INT >= 21) {
+            int selected = ContextCompat.getColor(context, R.color.l1_focus);
+            int unchecked = ContextCompat.getColor(context, R.color.l1_text_secondary);
+            android.content.res.ColorStateList tint = new android.content.res.ColorStateList(
+                    new int[][]{new int[]{android.R.attr.state_checked}, new int[]{}},
+                    new int[]{selected, unchecked});
+            ((android.widget.CompoundButton) button).setButtonTintList(tint);
+        }
+    }
+
     /** Preserve the existing HQ styling call sites during incremental migration. */
     public static void stylePlaybackQualityDialog(Fragment parent, View view) {
         styleL1Dialog(parent, view);
