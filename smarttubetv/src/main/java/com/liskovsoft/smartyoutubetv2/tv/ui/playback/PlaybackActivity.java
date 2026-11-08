@@ -35,7 +35,6 @@ public class PlaybackActivity extends LeanbackActivity {
     private static final float GAMEPAD_TRIGGER_INTENSITY_OFF = 0.45f;
     private boolean gamepadTriggerPressed = false;
     private PlaybackFragment mPlaybackFragment;
-    private boolean mStatsBackKeyConsumed;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -58,20 +57,6 @@ public class PlaybackActivity extends LeanbackActivity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // Consume both DOWN and UP so Back closes stats without exiting playback.
-        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && mStatsBackKeyConsumed) {
-            if (event.getAction() == KeyEvent.ACTION_UP) {
-                mStatsBackKeyConsumed = false;
-            }
-            return true;
-        }
-        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK
-                && event.getAction() == KeyEvent.ACTION_DOWN
-                && mPlaybackFragment != null && mPlaybackFragment.isDebugInfoShown()) {
-            mPlaybackFragment.showDebugInfo(false);
-            mStatsBackKeyConsumed = true;
-            return true;
-        }
         if (mPlaybackFragment != null) {
             mPlaybackFragment.onDispatchKeyEvent(event);
         }
