@@ -10,15 +10,15 @@ import java.util.Map;
 public final class VideoQualityCache {
     private static final long TTL_MS = 6L * 60 * 60 * 1000;
     private static final int MAX_ENTRIES = 400;
-    private static final Map<String, Entry> CACHE = new LinkedHashMap<String, Entry>(64, .75f, true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<String, Entry> eldest) {
+    private static final Map<String, QualityEntry> CACHE = new LinkedHashMap<String, QualityEntry>(64, .75f, true) {
+        @Override protected boolean removeEldestQualityEntry(Map.QualityEntry<String, QualityEntry> eldest) {
             return size() > MAX_ENTRIES;
         }
     };
-    private static final class Entry {
+    private static final class QualityEntry {
         final int tier;
         final long expires;
-        Entry(int tier, long expires) { this.tier = tier; this.expires = expires; }
+        QualityEntry(int tier, long expires) { this.tier = tier; this.expires = expires; }
     }
     private VideoQualityCache() {}
 
@@ -45,7 +45,7 @@ public final class VideoQualityCache {
 
     public static synchronized Integer get(String videoId) {
         if (videoId == null) return null;
-        Entry entry = CACHE.get(videoId);
+        QualityEntry entry = CACHE.get(videoId);
         if (entry == null) return null;
         if (entry.expires <= System.currentTimeMillis()) {
             CACHE.remove(videoId);
@@ -56,7 +56,7 @@ public final class VideoQualityCache {
 
     public static synchronized void put(String videoId, MediaItemFormatInfo info) {
         if (videoId == null || info == null) return;
-        CACHE.put(videoId, new Entry(detect(info), System.currentTimeMillis() + TTL_MS));
+        CACHE.put(videoId, new QualityEntry(detect(info), System.currentTimeMillis() + TTL_MS));
     }
 
     public static synchronized void clear() { CACHE.clear(); }
